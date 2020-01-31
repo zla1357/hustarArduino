@@ -1,6 +1,7 @@
 #include <MsTimer2.h>
-
+#include <Adafruit_Fingerprint.h>
 #include <EEPROM.h>
+
 #define touchBTN0pin 2 //interruptPin  터치센서1
 #define touchBTN1pin 3 // 터치센서2(높이실린더 DOWN)
 #define touchBTN2pin 4 // 터치센서3(높이실린더 UP)
@@ -91,14 +92,14 @@ void count() {
 
     if (btn_tim == touchBTN0pin) {
 
-        tim_cnt++;
+        //tim_cnt++;
     }
     else if (btn_tim == touchBTN1pin) {
 
-        tim2_cnt++;
+        //tim2_cnt++;
     }
     else if (btn_tim == touchBTN2pin) {
-        tim3_cnt++;
+        //tim3_cnt++;
     }
 }
 
