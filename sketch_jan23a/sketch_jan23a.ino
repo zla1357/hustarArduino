@@ -29,7 +29,7 @@ int btn_tim = 0;        //현재 타이머를 실행시킨 버튼(현재 누른 
 
 SoftwareSerial mySerial(12, 13);
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
-uint8_t id;
+uint16_t id;
 
 struct Cylinder {
 
@@ -74,7 +74,6 @@ void setup() {
 
     Serial.begin(9600);
 
-    pinMode(LEDPIN, OUTPUT);
     pinMode(touchBTN0pin, INPUT);
     pinMode(touchBTN1pin, INPUT);
     pinMode(touchBTN2pin, INPUT);
@@ -133,17 +132,18 @@ void startTimer(int btn) {
 }
 
 void stopTimer(int btn){
+  
     btn_tim = btn;
     MsTimer2::stop();
 }
 
 void readFingerPrint()                     // 지문을 읽어서 저장하는 함수
 {
-    int fingerCount = finger.getTemplateCount();
+    finger.getTemplateCount();
     Serial.println(finger.templateCount);
     Serial.println("Ready to enroll a fingerprint!");
     Serial.println("Please type in the ID # (from 1 to 127) you want to save this finger as...");
-    id = fingerCount + 1;                     //아이디를 부여하는 부분 필요
+    id = finger.templateCount + 1;
     if (id == 0) {// ID #0 not allowed, try again!
         return;
     }
@@ -300,7 +300,9 @@ void loop() {
     int touchValue2 = digitalRead(touchBTN1pin);
     int touchValue3 = digitalRead(touchBTN2pin);
 
-    if (btn_tim == 0 || btn_tim == touchBTN0pin) {
+    Serial.println(btn_tim);
+
+    if ((btn_tim == 0) || (btn_tim == touchBTN0pin)) {
 
         // 터치버튼1 터치됨, 숏터치 체크
         if (touchValue1 == HIGH) {
@@ -316,20 +318,49 @@ void loop() {
                     tim1_run_flag = 1;
                     startTimer(touchBTN0pin);
                 }
-                else {
-
-                    tim1_run_flag = 0;
-                    stopTimer(touchBTN0pin);
-                    btn_tim = 0;
-                }
             }
         }
         else {
-
-            touch_flag = 0;
+            if((btn_tim == touchBTN0pin) && (tim1_run_flag == 1)){
+                touch_flag = 0; 
+                stopTimer(touchBTN0pin);
+                btn_tim = 0;
+                tim1_run_flag = 0;
+                readFingerPrint();
+            }
         }
     }
 
+//    if (btn_tim == 0 || btn_tim == touchBTN0pin) {
+//
+//        // 터치버튼1 터치됨, 숏터치 체크
+//        if (touchValue1 == HIGH) {
+//
+//            // 터치가 되었을 때 엣지체크
+//            if (touch_flag == 0) {
+//              
+//                touch_flag = 1;
+//
+//                //타이머가 실행되고 있는지 체크
+//                if (tim1_run_flag == 0) {
+//
+//                    tim1_run_flag = 1;
+//                    startTimer(touchBTN0pin);
+//                }
+//                else {
+//
+//                    tim1_run_flag = 0;
+//                    stopTimer(touchBTN0pin);
+//                }
+//            }
+//        }
+//        else if(btn_tim = btn_tim) {
+//            touch_flag = 0;
+//            btn_tim = 0; 
+//        }
+//    }
+
+// 1번버튼을 롱터치로 바꿀 대를 대비해 남겨둔 구문
 //    if (btn_tim == 0 || btn_tim == touchBTN0pin) {
 //
 //        //터치버튼1 터치됨, 롱터치 체크
@@ -359,8 +390,9 @@ void loop() {
 //          }
 //        }
 //    }
+// 1번버튼을 롱터치로 바꿀 대를 대비해 남겨둔 구문
 
-    if (btn_tim == 0 || btn_tim == touchBTN1pin) {
+    if ((btn_tim == 0) || (btn_tim == touchBTN1pin)) {
 
         //터치버튼2 터치됨, 롱터치 체크
         if (touchValue2 == HIGH) {
@@ -381,7 +413,7 @@ void loop() {
         }
         else {
 
-          if (tim1_run_flag == 1) {
+          if ((tim1_run_flag == 1) && (btn_tim == touchBTN1pin)) {
 
               touch_flag2 = 0;
               tim1_run_flag = 0;
@@ -392,7 +424,7 @@ void loop() {
         }
     }
     
-    if (btn_tim == 0 || btn_tim == touchBTN2pin) {
+    if ((btn_tim == 0) || (btn_tim == touchBTN2pin)) {
 
         //터치버튼3 터치됨, 롱터치 체크
         if (touchValue3 == HIGH) {
@@ -413,7 +445,7 @@ void loop() {
         }
         else {
 
-          if (tim1_run_flag == 1) {
+          if ((tim1_run_flag == 1) && (btn_tim == touchBTN2pin)) {
 
               touch_flag3 = 0;
               tim1_run_flag = 0;
