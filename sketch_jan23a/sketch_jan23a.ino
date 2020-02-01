@@ -94,6 +94,9 @@ void setup() {
         Serial.println("Did not find fingerprint sensor :(");
         while (1) { delay(1); }
     }
+
+    finger.getTemplateCount();
+    Serial.print("Sensor contains "); Serial.print(finger.templateCount); Serial.println(" templates");
 }
 
 uint8_t readnumber(void) {
@@ -112,7 +115,7 @@ void count() {
 
     if (btn_tim == touchBTN0pin) {
 
-        //tim_cnt++;
+        tim_cnt++;
     }
     else if (btn_tim == touchBTN1pin) {
 
@@ -137,7 +140,7 @@ void stopTimer(int btn){
     MsTimer2::stop();
 }
 
-void readFingerPrint()                     // 지문을 읽어서 저장하는 함수
+void saveFingerPrint()                     // 지문을 읽어서 저장하는 함수
 {
     finger.getTemplateCount();
     Serial.println(finger.templateCount);
@@ -151,6 +154,8 @@ void readFingerPrint()                     // 지문을 읽어서 저장하는 �
     Serial.println(id);
     
     while (!  getFingerprintEnroll() );
+    finger.getTemplateCount();
+    Serial.println(finger.templateCount);
 }
 
 uint8_t getFingerprintEnroll() {
@@ -164,7 +169,7 @@ uint8_t getFingerprintEnroll() {
               Serial.println("Image taken");
               break;
           case FINGERPRINT_NOFINGER:
-              Serial.println(".");
+              Serial.print(".");
               break;
           case FINGERPRINT_PACKETRECIEVEERR:
               Serial.println("Communication error");
@@ -292,6 +297,23 @@ uint8_t getFingerprintEnroll() {
     }   
 }
 
+//지문을 인식하여 id를 출력
+int getFingerprintIDez() {
+  uint8_t p = finger.getImage();
+  if (p != FINGERPRINT_OK)  return -1;
+
+  p = finger.image2Tz();
+  if (p != FINGERPRINT_OK)  return -1;
+
+  p = finger.fingerFastSearch();
+  if (p != FINGERPRINT_OK)  return -1;
+  
+  // found a match!
+  Serial.print("Found ID #"); Serial.print(finger.fingerID); 
+  Serial.print(" with confidence of "); Serial.println(finger.confidence);
+  return finger.fingerID; 
+}
+
 void loop() {
 
 //    터치값 읽음
@@ -300,7 +322,7 @@ void loop() {
     int touchValue2 = digitalRead(touchBTN1pin);
     int touchValue3 = digitalRead(touchBTN2pin);
 
-    Serial.println(btn_tim);
+//    Serial.print(btn_tim);
 
     if ((btn_tim == 0) || (btn_tim == touchBTN0pin)) {
 
@@ -326,7 +348,18 @@ void loop() {
                 stopTimer(touchBTN0pin);
                 btn_tim = 0;
                 tim1_run_flag = 0;
-                readFingerPrint();
+
+                if(tim_cnt > 20){
+                    saveFingerPrint();
+                }
+                else{
+                    Serial.println("input fingerprint");
+                    int fingerId = -1;
+                    while(fingerId == -1){
+                        fingerId = getFingerprintIDez();
+                    }  
+                }
+                tim_cnt = 0;
             }
         }
     }
