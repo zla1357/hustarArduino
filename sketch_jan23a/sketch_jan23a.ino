@@ -15,7 +15,6 @@
 #define deskCylinderR 11
 #define deskCylinderL 12
 
-#define LEDPIN 13      // LED 핀 설정
 #define ADDR_CYL_MAIN 0 //메인실린더 값을 저장하는 주소
 
 int touch_flag = 0;     //터치버튼1의 엣지체크를 위한 플래그
@@ -74,29 +73,26 @@ void setup() {
 
     Serial.begin(9600);
 
+    Serial.println("핀 초기화중...");
     pinMode(touchBTN0pin, INPUT);
     pinMode(touchBTN1pin, INPUT);
     pinMode(touchBTN2pin, INPUT);
     pinMode(tCylinder.pinR, OUTPUT);
     pinMode(tCylinder.pinL, OUTPUT);
 
-    if (EEPROM.read(ADDR_CYL_MAIN) < 1) {
-
-        EEPROM.write(ADDR_CYL_MAIN, 1);
-    }
-
     MsTimer2::set(100, count);
 
+    Serial.println("지문인식 센서 초기화중...");
     finger.begin(57600);
     if (finger.verifyPassword()) {
-        Serial.println("Found fingerprint sensor!");
+        Serial.println("지문인식 센서 설정 완료");
     } else {
-        Serial.println("Did not find fingerprint sensor :(");
+        Serial.println("지문인식 센서를 찾지 못했습니다.");
         while (1) { delay(1); }
     }
 
     finger.getTemplateCount();
-    Serial.print("Sensor contains "); Serial.print(finger.templateCount); Serial.println(" templates");
+    Serial.print("센서에 저장된 지문은 "); Serial.print(finger.templateCount); Serial.println("개 입니다.");
 }
 
 uint8_t readnumber(void) {
@@ -141,21 +137,19 @@ void stopTimer(int btn){
 }
 
 void saveFingerPrint()                     // 지문을 읽어서 저장하는 함수
-{
+{    
     finger.getTemplateCount();
     Serial.println(finger.templateCount);
-    Serial.println("Ready to enroll a fingerprint!");
-    Serial.println("Please type in the ID # (from 1 to 127) you want to save this finger as...");
+    Serial.println("지문 저장 준비");
     id = finger.templateCount + 1;
     if (id == 0) {// ID #0 not allowed, try again!
         return;
     }
-    Serial.print("Enrolling ID #");
-    Serial.println(id);
+    Serial.print("ID ");
+    Serial.print(id);
+    Serial.print("(으)로 지문을 저장합니다.");
     
     while (!  getFingerprintEnroll() );
-    finger.getTemplateCount();
-    Serial.println(finger.templateCount);
 }
 
 uint8_t getFingerprintEnroll() {
@@ -172,13 +166,13 @@ uint8_t getFingerprintEnroll() {
               Serial.print(".");
               break;
           case FINGERPRINT_PACKETRECIEVEERR:
-              Serial.println("Communication error");
+              Serial.println("통신 에러");
               break;
           case FINGERPRINT_IMAGEFAIL:
-              Serial.println("Imaging error");
+              Serial.println("이미지 변환 에러");
               break;
           default:
-              Serial.println("Unknown error");
+              Serial.println("알 수 없는 에러");
               break;
         }
     }
@@ -188,13 +182,13 @@ uint8_t getFingerprintEnroll() {
     p = finger.image2Tz(1);
     switch (p) {
         case FINGERPRINT_OK:
-            Serial.println("Image converted");
+            Serial.println("이미지 변환 완료");
             break;
         case FINGERPRINT_IMAGEMESS:
-            Serial.println("Image too messy");
+            Serial.println("이미지가 너무 큽니다.");
             return p;
         case FINGERPRINT_PACKETRECIEVEERR:
-            Serial.println("Communication error");
+            Serial.println("통신 에러");
             return p;
         case FINGERPRINT_FEATUREFAIL:
             Serial.println("Could not find fingerprint features");
@@ -203,11 +197,17 @@ uint8_t getFingerprintEnroll() {
             Serial.println("Could not find fingerprint features");
             return p;
         default:
-            Serial.println("Unknown error");
+            Serial.println("알 수 없는 에러");
             return p;
     }
+
+    p = finger.fingerFastSearch();
+    if (p == FINGERPRINT_OK){
+        Serial.println("이미 존재하는 지문입니다.");
+        return 1;  
+    }
     
-    Serial.println("Remove finger");
+    Serial.println("손가락을 떼세요");
     delay(2000);
     p = 0;
     while (p != FINGERPRINT_NOFINGER) {
@@ -215,7 +215,7 @@ uint8_t getFingerprintEnroll() {
     }
     Serial.print("ID "); Serial.println(id);
     p = -1;
-    Serial.println("Place same finger again");
+    Serial.println("같은 손가락을 다시 올려주세요");
     while (p != FINGERPRINT_OK) {
         p = finger.getImage();
         switch (p) {
@@ -226,13 +226,13 @@ uint8_t getFingerprintEnroll() {
                 Serial.print(".");
                 break;
             case FINGERPRINT_PACKETRECIEVEERR:
-                Serial.println("Communication error");
+                Serial.println("통신 에러");
                 break;
             case FINGERPRINT_IMAGEFAIL:
-                Serial.println("Imaging error");
+                Serial.println("이미지 변환 에러");
                 break;
             default:
-                Serial.println("Unknown error");
+                Serial.println("알 수 없는 에러");
                 break;
         }
     }
@@ -242,10 +242,10 @@ uint8_t getFingerprintEnroll() {
     p = finger.image2Tz(2);
     switch (p) {
         case FINGERPRINT_OK:
-            Serial.println("Image converted");
+            Serial.println("이미지 변환 완료");
             break;
         case FINGERPRINT_IMAGEMESS:
-            Serial.println("Image too messy");
+            Serial.println("이미지가 너무 큽니다.");
             return p;
         case FINGERPRINT_PACKETRECIEVEERR:
             Serial.println("Communication error");
@@ -257,42 +257,43 @@ uint8_t getFingerprintEnroll() {
             Serial.println("Could not find fingerprint features");
             return p;
         default:
-            Serial.println("Unknown error");
+            Serial.println("알 수 없는 에러");
             return p;
     }
     
     // OK converted!
-    Serial.print("Creating model for #");  Serial.println(id);
+    Serial.print("다음 ID로 저장합니다. ");  Serial.println(id);
     
     p = finger.createModel();
     if (p == FINGERPRINT_OK) {
-        Serial.println("Prints matched!");
+        Serial.println("데이터 일치!");
     } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
-        Serial.println("Communication error");
+        Serial.println("통신 에러");
         return p;
     } else if (p == FINGERPRINT_ENROLLMISMATCH) {
-        Serial.println("Fingerprints did not match");
+        Serial.println("지문이 일치하지 않습니다.");
         return p;
     } else {
-        Serial.println("Unknown error");
+        Serial.println("알 수 없는 에러");
         return p;
     }   
     
     Serial.print("ID "); Serial.println(id);
     p = finger.storeModel(id);
     if (p == FINGERPRINT_OK) {
-        Serial.println("Stored!");
+        Serial.println("저장완료!");
+        return 1;
     } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
-        Serial.println("Communication error");
+        Serial.println("통신 에러");
         return p;
     } else if (p == FINGERPRINT_BADLOCATION) {
-        Serial.println("Could not store in that location");
+        Serial.println("해당 ID로 저장할 수 없습니다.");
         return p;
     } else if (p == FINGERPRINT_FLASHERR) {
-        Serial.println("Error writing to flash");
+        Serial.println("플래시 메모리에 저장중에 오류가 발생하였습니다.");
         return p;
     } else {
-        Serial.println("Unknown error");
+        Serial.println("알 수 없는 에러");
         return p;
     }   
 }
@@ -310,7 +311,7 @@ int getFingerprintIDez() {
   
   // found a match!
   Serial.print("Found ID #"); Serial.print(finger.fingerID); 
-  Serial.print(" with confidence of "); Serial.println(finger.confidence);
+  Serial.print(" 신뢰도 "); Serial.println(finger.confidence);
   return finger.fingerID; 
 }
 
@@ -353,10 +354,14 @@ void loop() {
                     saveFingerPrint();
                 }
                 else{
-                    Serial.println("input fingerprint");
+                    Serial.println("손가락을 올려주세요");
                     int fingerId = -1;
                     while(fingerId == -1){
                         fingerId = getFingerprintIDez();
+                        delay(50);
+                        if(fingerId == -1){
+                            Serial.println("지문을 찾을 수 없습니다.");
+                        }
                     }  
                 }
                 tim_cnt = 0;
