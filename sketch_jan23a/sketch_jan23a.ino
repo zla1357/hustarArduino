@@ -1,3 +1,4 @@
+//두용이 작업내용 저장하기 전 세이브 포인트
 #include <MsTimer2.h>
 #include <Adafruit_Fingerprint.h>
 #include <EEPROM.h>
