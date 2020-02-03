@@ -99,6 +99,9 @@ void setup() {
         while (1) { delay(1); }
     }
 
+//    //지문을 전부 초기화
+//    finger.emptyDatabase();
+
     finger.getTemplateCount();
     Serial.print("센서에 저장된 지문은 "); Serial.print(finger.templateCount); Serial.println("개 입니다.");
 }
@@ -270,7 +273,6 @@ uint8_t getFingerprintEnroll() {
     }
     
     // OK converted!
-    Serial.print("다음 ID로 저장합니다. ");  Serial.println(id);
     
     p = finger.createModel();
     if (p == FINGERPRINT_OK) {
@@ -285,12 +287,15 @@ uint8_t getFingerprintEnroll() {
         Serial.println("알 수 없는 에러");
         return p;
     }   
-    
+    Serial.print("다음 ID로 저장합니다. ");  Serial.println(id);
     Serial.print("ID "); Serial.println(id);
     p = finger.storeModel(id);
     if (p == FINGERPRINT_OK) {
         Serial.println("저장완료!");
-        EEPROM.write(id * 5 + ADDR_FING_KEY, );
+
+        //eeprom에 지문에 대한 각도를 저장하는 부분
+        EEPROM.write(id * 5 + ADDR_FING_KEY, id);
+        EEPROM.write(id * 5 + ADDR_MONI_HEIGHT, tim2_cnt);
         return 1;
     } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
         Serial.println("통신 에러");
@@ -321,6 +326,8 @@ int getFingerprintIDez() {
   // found a match!
   Serial.print("Found ID #"); Serial.print(finger.fingerID); 
   Serial.print(" 신뢰도 "); Serial.println(finger.confidence);
+  Serial.print("책상높이 : ");
+  Serial.println(EEPROM.read(finger.fingerID * 5 + ADDR_MONI_HEIGHT));
   return finger.fingerID; 
 }
 
