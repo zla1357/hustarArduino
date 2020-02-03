@@ -15,7 +15,15 @@
 #define deskCylinderR 11
 #define deskCylinderL 12
 
-#define ADDR_CYL_MAIN 0 //메인실린더 값을 저장하는 주소
+//메모리에 지문에 대한 각도값을 저장하기 위해 정의하는 이름
+//한 id에 대한 메모리 크기는 5바이트로 설정
+//저장되는 메모리 위치는 id * 5 + addr
+//ex) id가 5인 지문의 id가 저장되는 주소 : 5 * 5 + 0 = 25
+//ex2) id가 5인 지문의 모니터 높이가 저장되는 주소 : 5 * 5 + 1 = 26
+#define ADDR_FING_KEY 0       //지문 ID
+#define ADDR_MONI_HEIGHT 1    //모니터 높이
+#define ADDR_MONI_ANGLE 2     //모니터 각도
+#define ADDR_BOOK_HEIGHT 3    //독서대 높이
 
 int touch_flag = 0;     //터치버튼1의 엣지체크를 위한 플래그
 int touch_flag2 = 0;    //터치버튼2의 엣지체크를 위한 플래그
@@ -105,7 +113,7 @@ uint8_t readnumber(void) {
     return num;
 }
 
-//실리더를 움직인 시간 카운터
+//실린더를 움직인 시간 카운터
 
 void count() {
 
@@ -115,10 +123,10 @@ void count() {
     }
     else if (btn_tim == touchBTN1pin) {
 
-        //tim2_cnt++;
+        tim2_cnt++;
     }
     else if (btn_tim == touchBTN2pin) {
-        //tim3_cnt++;
+        tim3_cnt++;
     }
 }
 
@@ -282,6 +290,7 @@ uint8_t getFingerprintEnroll() {
     p = finger.storeModel(id);
     if (p == FINGERPRINT_OK) {
         Serial.println("저장완료!");
+        EEPROM.write(id * 5 + ADDR_FING_KEY, );
         return 1;
     } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
         Serial.println("통신 에러");
