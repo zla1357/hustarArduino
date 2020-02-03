@@ -25,7 +25,7 @@
 // pin #3 is OUT from arduino  (WHITE wire)
 // comment these two lines if using hardware serial
 #include <SoftwareSerial.h>
-SoftwareSerial mySerial(2, 3);
+SoftwareSerial mySerial(12, 13);
 
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 
