@@ -390,6 +390,11 @@ void loop() {
   //default:
   //}
   
+  Serial.print("touch1 : ");
+  Serial.print(analogRead(touchBTN1pin));
+  Serial.print("  touch2 : ");
+  Serial.println(analogRead(touchBTN2pin));
+  
   if ( (btn_tim == 0 || btn_tim == touchBTN1pin) and mode == 0) { //모드0번 1버튼 독서대 위로  : 누르는 동안 작동
     if (analogRead(touchBTN1pin) >= 900) {
       if (desk_flag == false) { // 터치가 되었을 때 엣지체크
