@@ -360,31 +360,46 @@ int getFingerprintIDez() {
   Serial.print("책상높이 : ");
   Serial.println(book_height);
 
+  //독서대 실린더를 확인해서 증감시키는 부분
   if (photo_cnt_desk < book_height) {
 
     //독서대 실린더 늘임
     Serial.println("desk up");
-    tim1_run_flag = 1;
-    startTimer(touchBTN1pin);
     fCylinderUP(deskCylinder);
   }
   else if (photo_cnt_desk > book_height) {
 
     //독서대 실린더 줄임
-
     Serial.println("desk down");//TEST
-    tim1_run_flag = 1;
-    startTimer(touchBTN2pin);
     fCylinderDOWN(deskCylinder);
   }
 
+  //모니터 높이 실린더를 확인해서 증감시키는 부분
+  if (photo_cnt_move < moni_height) {
+
+    //모니터 높이 실린더 늘임
+    Serial.println("monitor up");
+    fCylinderUP(moniterMoveCylinder);
+  }
+  else if (photo_cnt_move > moni_height) {
+
+    //모니터 높이 실린더 줄임
+    Serial.println("monitor down");//TEST
+    fCylinderDOWN(moniterMoveCylinder);
+  }
+
   //현재 포토센서 값과 지문인식으로 불러온 값이 같아질 때 까지 이동
-  while (photo_cnt_desk != book_height) {
+  while ((photo_cnt_desk != book_height) or (photo_cnt_move != moni_height)) {
     int curr_photo_desk = digitalRead(PHOTOSENSOR1);
     int curr_photo_angle = digitalRead(PHOTOSENSOR1);
     int curr_photo_move = digitalRead(PHOTOSENSOR1);
 
-    fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, (photo_cnt_desk < book_height ? 1 : -1));
+    if (photo_cnt_desk != book_height) {
+      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, (photo_cnt_desk < book_height ? 1 : -1));
+    }
+    if (photo_cnt_move != moni_height) {
+      fPhoto_test(pre_photo_move , curr_photo_desk, &photo_cnt_move, (photo_cnt_move < moni_height ? 1 : -1));
+    }
 
     pre_photo_desk = curr_photo_desk;
     pre_photo_angle = curr_photo_angle;
@@ -392,10 +407,14 @@ int getFingerprintIDez() {
   }
 
   //독서대 멈춤
-  tim1_run_flag = 0;
-  stopTimer(touchBTN1pin);
   fCylinderSTOP(deskCylinder);
   //독서대 멈춤
+
+  //모니터 높이 멈춤
+  fCylinderSTOP(moniterMoveCylinder);
+  //독서대 멈춤
+
+  
 
   return finger.fingerID;
 }
