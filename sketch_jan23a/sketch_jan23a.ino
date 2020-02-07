@@ -14,11 +14,11 @@
 #define angleCylinderR 4
 #define angleCylinderL 5
 
-#define moveCylinderR 4
-#define moveCylinderL 5
+#define moveCylinderR 6
+#define moveCylinderL 7
 
-#define deskCylinderR 4 //독서대 원래는 6
-#define deskCylinderL 5 //독서대 원래는 7
+#define deskCylinderR 8 //독서대 원래는 6
+#define deskCylinderL 9 //독서대 원래는 7
 
 #define LEDPIN 1
 #define TX 12
@@ -85,12 +85,6 @@ void fCylinderSTOP(struct Cylinder mCylinder) {
   Serial.println("Cylinder stop");
   digitalWrite(mCylinder.pinR, LOW);
   digitalWrite(mCylinder.pinL, LOW);
-  Serial.print("cnt1 : ");
-  Serial.print(tim_cnt);
-  Serial.print("     cnt2 : ");
-  Serial.print(tim2_cnt);
-  Serial.print("     cnt3 : ");
-  Serial.println(tim3_cnt);
 }
 
 void fCylinderUP (struct Cylinder mCylinder) {
@@ -317,9 +311,9 @@ uint8_t getFingerprintEnroll() {
 
     //eeprom에 지문에 대한 각도를 저장하는 부분
     EEPROM.write(id * 5 + ADDR_FING_KEY, id);
-    EEPROM.write(id * 5 + ADDR_MONI_HEIGHT, tim2_cnt);
-    EEPROM.write(id * 5 + ADDR_MONI_HEIGHT, tim2_cnt);//모니터 각도
-    EEPROM.write(id * 5 + ADDR_MONI_HEIGHT, tim2_cnt);// 독서대 로 변경할것
+    EEPROM.write(id * 5 + ADDR_MONI_HEIGHT, photo_cnt_move);
+    EEPROM.write(id * 5 + ADDR_MONI_ANGLE, photo_cnt_angle);//모니터 각도
+    EEPROM.write(id * 5 + ADDR_BOOK_HEIGHT, photo_cnt_desk);// 독서대 로 변경할것
     return 1;
   } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
     Serial.println("통신 에러");
@@ -350,8 +344,13 @@ int getFingerprintIDez() {
   // found a match!
   Serial.print("Found ID #"); Serial.print(finger.fingerID);
   Serial.print(" 신뢰도 "); Serial.println(finger.confidence);
-  Serial.print("책상높이 : ");
+  
+  Serial.print("모니터 높이 : ");
   Serial.println(EEPROM.read(finger.fingerID * 5 + ADDR_MONI_HEIGHT));
+  Serial.print("모니터 각도 : ");
+  Serial.println(EEPROM.read(finger.fingerID * 5 + ADDR_MONI_ANGLE));
+  Serial.print("책상높이 : ");
+  Serial.println(EEPROM.read(finger.fingerID * 5 + ADDR_BOOK_HEIGHT));
   return finger.fingerID;
 }
 
@@ -374,6 +373,10 @@ void setup() {
   pinMode(LEDPIN, OUTPUT);
   pinMode(deskCylinderR, OUTPUT);
   pinMode(deskCylinderL, OUTPUT);
+  pinMode(moveCylinderR, OUTPUT);
+  pinMode(moveCylinderL, OUTPUT);
+  pinMode(angleCylinderR, OUTPUT);
+  pinMode(angleCylinderL, OUTPUT);
   //pinMode(touchBTN0pin, INPUT);
   //attachInterrupt(digitalPinToInterrupt(touchBTN0pin), modeSet, FALLING);
 
@@ -393,6 +396,8 @@ void setup() {
   //    finger.emptyDatabase();
 }
 
+//포토다이오드 센서 값에 따라 포토다이오드 카운트를 증감시키는 함수
+//이전 포토다이오드값, 현재 포토다이오드값, 증감시킬 카운트 변수의 포인터, 증감값
 void fPhoto_test(int pre_photo, int curr_photo, int *cnt, int x) {
   if (curr_photo == 0 and pre_photo == 1) {
     if ( x == 1) {
@@ -550,7 +555,6 @@ void loop() {
           tim1_run_flag = 1;
           startTimer(touchBTN1pin);
           fCylinderUP(moniterMoveCylinder);
-          digitalWrite(LEDPIN, HIGH);//TEST
         }
       }
 
@@ -562,7 +566,6 @@ void loop() {
         tim1_run_flag = 0;
         stopTimer(touchBTN1pin);
         fCylinderSTOP(moniterMoveCylinder);
-        digitalWrite(LEDPIN, LOW);//TEST
       }
     }
   }
@@ -603,7 +606,6 @@ void loop() {
           tim1_run_flag = 1;
           startTimer(touchBTN3pin);
           fCylinderUP(moniterAngleCylinder);
-          digitalWrite(LEDPIN, HIGH);//TEST
         }
       }
       fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, 1);
@@ -613,9 +615,7 @@ void loop() {
         move_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN3pin);
-        fCylinderSTOP(deskCylinder);
-        //btn_tim = 0;
-        digitalWrite(LEDPIN, LOW);//TEST
+        fCylinderSTOP(moniterAngleCylinder);
       }
     }
   }
@@ -631,7 +631,6 @@ void loop() {
           tim1_run_flag = 1;
           startTimer(touchBTN4pin);
           fCylinderDOWN(moniterAngleCylinder);
-          digitalWrite(LEDPIN, HIGH);//TEST
         }
       }
       fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, -1);
@@ -641,8 +640,7 @@ void loop() {
         move_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN4pin);
-        fCylinderSTOP(deskCylinder);
-        digitalWrite(LEDPIN, LOW);//TEST
+        fCylinderSTOP(moniterAngleCylinder);
       }
     }
   }
