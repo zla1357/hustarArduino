@@ -45,15 +45,15 @@ bool move_flag = false;
 
 int pre_photo_move = 0;
 int photo_cnt_move = 0;
-int curr_photo_angle = 0;
+//int curr_photo_angle = 0;
 
 int pre_photo_angle = 0;
 int photo_cnt_angle = 0;
-int curr_photo_move = 0;
+//int curr_photo_move = 0;
 
 int pre_photo_desk = 0;
 int photo_cnt_desk = 0;
-int curr_photo_desk = 0;
+//int curr_photo_desk = 0;
 
 
 
@@ -333,6 +333,10 @@ uint8_t getFingerprintEnroll() {
 //지문을 인식하여 id를 출력
 int getFingerprintIDez() {
   uint8_t p = finger.getImage();
+  int moni_height = 0;
+  int moni_angle = 0;
+  int book_height = 0;
+
   if (p != FINGERPRINT_OK)  return -1;
 
   p = finger.image2Tz();
@@ -344,13 +348,55 @@ int getFingerprintIDez() {
   // found a match!
   Serial.print("Found ID #"); Serial.print(finger.fingerID);
   Serial.print(" 신뢰도 "); Serial.println(finger.confidence);
-  
+
+  moni_height = EEPROM.read(finger.fingerID * 5 + ADDR_MONI_HEIGHT);
+  moni_angle = EEPROM.read(finger.fingerID * 5 + ADDR_MONI_ANGLE);
+  book_height = EEPROM.read(finger.fingerID * 5 + ADDR_BOOK_HEIGHT);
+
   Serial.print("모니터 높이 : ");
-  Serial.println(EEPROM.read(finger.fingerID * 5 + ADDR_MONI_HEIGHT));
+  Serial.println(moni_height);
   Serial.print("모니터 각도 : ");
-  Serial.println(EEPROM.read(finger.fingerID * 5 + ADDR_MONI_ANGLE));
+  Serial.println(moni_angle);
   Serial.print("책상높이 : ");
-  Serial.println(EEPROM.read(finger.fingerID * 5 + ADDR_BOOK_HEIGHT));
+  Serial.println(book_height);
+
+  if (photo_cnt_desk < book_height) {
+
+    //독서대 실린더 늘임
+    Serial.println("desk up");
+    tim1_run_flag = 1;
+    startTimer(touchBTN1pin);
+    fCylinderUP(deskCylinder);
+  }
+  else if (photo_cnt_desk > book_height) {
+
+    //독서대 실린더 줄임
+
+    Serial.println("desk down");//TEST
+    tim1_run_flag = 1;
+    startTimer(touchBTN2pin);
+    fCylinderDOWN(deskCylinder);
+  }
+
+  //현재 포토센서 값과 지문인식으로 불러온 값이 같아질 때 까지 이동
+  while (photo_cnt_desk != book_height) {
+    int curr_photo_desk = digitalRead(PHOTOSENSOR1);
+    int curr_photo_angle = digitalRead(PHOTOSENSOR1);
+    int curr_photo_move = digitalRead(PHOTOSENSOR1);
+
+    fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, (photo_cnt_desk < book_height ? 1 : -1));
+
+    pre_photo_desk = curr_photo_desk;
+    pre_photo_angle = curr_photo_angle;
+    pre_photo_move = curr_photo_move;
+  }
+
+  //독서대 멈춤
+  tim1_run_flag = 0;
+  stopTimer(touchBTN1pin);
+  fCylinderSTOP(deskCylinder);
+  //독서대 멈춤
+
   return finger.fingerID;
 }
 
@@ -494,7 +540,6 @@ void loop() {
           tim1_run_flag = 1;
           startTimer(touchBTN2pin);
           fCylinderDOWN(deskCylinder);
-          digitalWrite(LEDPIN, HIGH);//TEST
         }
       }
 
