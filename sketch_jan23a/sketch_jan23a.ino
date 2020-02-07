@@ -22,7 +22,7 @@
 
 #define LEDPIN 1
 #define TX 12
-#define RX 13 
+#define RX 13
 
 #define PHOTOSENSOR1 2
 
@@ -399,7 +399,12 @@ void fPhoto_test(int pre_photo, int curr_photo, int *cnt, int x) {
       (*cnt)++;
 
     } else if ( x == -1) {
-      (*cnt)--;
+      if ((*cnt) < 2) {
+        (*cnt) = 1;
+      }
+      else {
+        (*cnt)--;
+      }
     }
 
     Serial.print(*cnt);
@@ -629,7 +634,7 @@ void loop() {
           digitalWrite(LEDPIN, HIGH);//TEST
         }
       }
-            fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, -1);
+      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, -1);
     }
     else {
       if (tim1_run_flag == 1) {
