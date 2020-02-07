@@ -391,7 +391,6 @@ int getFingerprintIDez() {
   //현재 포토센서 값과 지문인식으로 불러온 값이 같아질 때 까지 이동
   while ((photo_cnt_desk != book_height) or (photo_cnt_move != moni_height)) {
     int curr_photo_desk = digitalRead(PHOTOSENSOR1);
-    int curr_photo_angle = digitalRead(PHOTOSENSOR1);
     int curr_photo_move = digitalRead(PHOTOSENSOR1);
 
     if (photo_cnt_desk != book_height) {
@@ -402,7 +401,6 @@ int getFingerprintIDez() {
     }
 
     pre_photo_desk = curr_photo_desk;
-    pre_photo_angle = curr_photo_angle;
     pre_photo_move = curr_photo_move;
   }
 
@@ -412,10 +410,37 @@ int getFingerprintIDez() {
 
   //모니터 높이 멈춤
   fCylinderSTOP(moniterMoveCylinder);
-  //독서대 멈춤
+  //모니터 높이 멈춤
 
+  //모니터 높이조절이 멈춘 후에 모니터 각도를 확인하여 움직임
+  //모니터 각도 실린더를 확인해서 증감시키는 부분
+  if (photo_cnt_angle < moni_angle) {
+
+    //모니터 각도 실린더 늘임
+    Serial.println("monitor angle up");
+    fCylinderUP(moniterAngleCylinder);
+  }
+  else if (photo_cnt_angle > moni_angle) {
+
+    //모니터 각도 실린더 줄임
+    Serial.println("monitor angle down");//TEST
+    fCylinderDOWN(moniterAngleCylinder);
+  }
+
+  while (photo_cnt_angle != angle_height) {
+    int curr_photo_angle = digitalRead(PHOTOSENSOR1);
+
+    if (photo_cnt_angle != moni_angle) {
+      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, (photo_cnt_angle < moni_angle ? 1 : -1));
+    }
+    
+    pre_photo_angle = curr_photo_angle;
+  }
+
+  //모니터 각도 멈춤
+  fCylinderSTOP(moniterAngleCylinder);
+  //모니터 각도 멈춤
   
-
   return finger.fingerID;
 }
 
