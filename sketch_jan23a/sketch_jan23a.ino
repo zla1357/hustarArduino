@@ -2,8 +2,10 @@
 #include <MsTimer2.h>
 #include <Adafruit_Fingerprint.h>
 #include <SoftwareSerial.h>
+#include "U8glib.h"
 
-//#define touchBTN0pin 2 //interruptPin
+U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE | U8G_I2C_OPT_DEV_0); // I2C / TWI
+
 #define touchBTN0pin A0 //interruptPin
 #define touchBTN1pin A1
 #define touchBTN2pin A2
@@ -20,7 +22,6 @@
 #define deskCylinderR 8 //독서대 원래는 6
 #define deskCylinderL 9 //독서대 원래는 7
 
-#define LEDPIN 1
 #define TX 12
 #define RX 13
 
@@ -84,28 +85,46 @@ struct Cylinder moniterMoveCylinder = { moveCylinderR, moveCylinderL};
 struct Cylinder moniterAngleCylinder = { angleCylinderR, angleCylinderL};
 
 void fCylinderSTOP(struct Cylinder mCylinder) {
-  Serial.println("Cylinder stop");
+  //  Serial.println("Cylinder stop");
+
+  u8g.firstPage();
+  do {
+    u8g.drawStr(0, 22, "Cylinder stop");
+  } while (u8g.nextPage());
+
   digitalWrite(mCylinder.pinR, LOW);
   digitalWrite(mCylinder.pinL, LOW);
 }
 
 void fCylinderUP (struct Cylinder mCylinder) {
-  Serial.print("Cylinder up  ");
-  Serial.print("pin : ");
-  Serial.print(mCylinder.pinR);
-  Serial.print(" pin : ");
-  Serial.println(mCylinder.pinL);
+  //  Serial.print("Cylinder up  ");
+
+  u8g.firstPage();
+  do {
+    u8g.drawStr(0, 22, "Cylinder up");
+  } while (u8g.nextPage());
+
+  //  Serial.print("pin : ");
+  //  Serial.print(mCylinder.pinR);
+  //  Serial.print(" pin : ");
+  //  Serial.println(mCylinder.pinL);
 
   digitalWrite(mCylinder.pinR, HIGH);
   digitalWrite(mCylinder.pinL, LOW);
 }
 
 void fCylinderDOWN (struct Cylinder mCylinder) {
-  Serial.print("Cylinder down  ");
-  Serial.print("pin : ");
-  Serial.print(mCylinder.pinR);
-  Serial.print(" pin : ");
-  Serial.println(mCylinder.pinL);
+  //  Serial.print("Cylinder down  ");
+
+  u8g.firstPage();
+  do {
+    u8g.drawStr(0, 22, "Cylinder down");
+  } while (u8g.nextPage());
+
+  //  Serial.print("pin : ");
+  //  Serial.print(mCylinder.pinR);
+  //  Serial.print(" pin : ");
+  //  Serial.println(mCylinder.pinL);
 
   digitalWrite(mCylinder.pinR, LOW);
   digitalWrite(mCylinder.pinL, HIGH);
@@ -158,17 +177,17 @@ void stopTimer(int btn) {
 void saveFingerPrint(int btn)                     // 지문을 읽어서 저장하는 함수
 {
   finger.getTemplateCount();
-  Serial.println(finger.templateCount);
-  Serial.println("지문 저장 준비");
+
   id = finger.templateCount + 1;
-  if (id == 0) {// ID #0 not allowed, try again!
+  if (id == 0) {
     return;
   }
-  Serial.print("ID ");
-  Serial.print(id);
-  Serial.print("(으)로 지문을 저장합니다.");
+
+  //  Serial.print("ID ");
+  //  Serial.print(id);
+  //  Serial.print("(으)로 지문을 저장합니다.");
   startTimer(btn);
-  while (!  getFingerprintEnroll() )
+  while (!getFingerprintEnroll())
   {
   }
 
@@ -179,29 +198,51 @@ void saveFingerPrint(int btn)                     // 지문을 읽어서 저장�
 uint8_t getFingerprintEnroll() {
 
   int p = -1;
-  Serial.print("Waiting for valid finger to enroll as #"); Serial.println(id);
-
+  //  Serial.print("Waiting for valid finger to enroll as #"); Serial.println(id);
   while (p != FINGERPRINT_OK) {
     p = finger.getImage();
     switch (p) {
       case FINGERPRINT_OK:
-        Serial.println("Image taken");
+        //        Serial.println("Image taken");
         break;
       case FINGERPRINT_NOFINGER:
-        Serial.print(".");
+        //        Serial.print(".");
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "Waiting for");
+          u8g.drawStr(0, 44, "valid finger.");
+        } while (u8g.nextPage());
         if (finger_save_cnt > 30 ) {
-          Serial.println("시간초과");
+          //          Serial.println("시간초과");
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "Time out");
+          } while (u8g.nextPage());
           return 1;
         }
         break;
       case FINGERPRINT_PACKETRECIEVEERR:
-        Serial.println("통신 에러");
+        //        Serial.println("통신 에러");
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "communication");
+          u8g.drawStr(0, 44, "error");
+        } while (u8g.nextPage());
         break;
       case FINGERPRINT_IMAGEFAIL:
-        Serial.println("이미지 변환 에러");
+        //        Serial.println("이미지 변환 에러");
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "image convert");
+          u8g.drawStr(0, 44, "error");
+        } while (u8g.nextPage());
         break;
       default:
-        Serial.println("알 수 없는 에러");
+        //        Serial.println("알 수 없는 에러");
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "unknown error");
+        } while (u8g.nextPage());
         break;
     }
   }
@@ -211,13 +252,27 @@ uint8_t getFingerprintEnroll() {
   p = finger.image2Tz(1);
   switch (p) {
     case FINGERPRINT_OK:
-      Serial.println("이미지 변환 완료");
+      //      Serial.println("이미지 변환 완료");
+      u8g.firstPage();
+      do {
+        u8g.drawStr(0, 22, "image convert");
+        u8g.drawStr(0, 44, "complete");
+      } while (u8g.nextPage());
       break;
     case FINGERPRINT_IMAGEMESS:
-      Serial.println("이미지가 너무 큽니다.");
+      //      Serial.println("이미지가 너무 큽니다.");
+      u8g.firstPage();
+      do {
+        u8g.drawStr(0, 22, "to big image");
+      } while (u8g.nextPage());
       return p;
     case FINGERPRINT_PACKETRECIEVEERR:
-      Serial.println("통신 에러");
+      //      Serial.println("통신 에러");
+      u8g.firstPage();
+      do {
+        u8g.drawStr(0, 22, "communication");
+        u8g.drawStr(0, 44, "error");
+      } while (u8g.nextPage());
       return p;
     case FINGERPRINT_FEATUREFAIL:
       Serial.println("Could not find fingerprint features");
@@ -226,25 +281,53 @@ uint8_t getFingerprintEnroll() {
       Serial.println("Could not find fingerprint features");
       return p;
     default:
-      Serial.println("알 수 없는 에러");
+      //      Serial.println("알 수 없는 에러");
+      u8g.firstPage();
+      do {
+        u8g.drawStr(0, 22, "unknown error");
+      } while (u8g.nextPage());
       return p;
   }
 
   p = finger.fingerFastSearch();
   if (p == FINGERPRINT_OK) {
-    Serial.println("이미 존재하는 지문입니다.");
+    //    Serial.println("이미 존재하는 지문입니다.");
+    u8g.firstPage();
+    do {
+      u8g.drawStr(0, 22, "fingerprint");
+      u8g.drawStr(0, 44, "already exist");
+    } while (u8g.nextPage());
     return 1;
   }
 
-  Serial.println("손가락을 떼세요");
+  //  Serial.println("손가락을 떼세요");
+  u8g.firstPage();
+  do {
+    u8g.drawStr(0, 22, "put off finger");
+  } while (u8g.nextPage());
   delay(2000);
   p = 0;
   while (p != FINGERPRINT_NOFINGER) {
     p = finger.getImage();
   }
-  Serial.print("ID "); Serial.println(id);
+  //  Serial.print("ID "); Serial.println(id);
+
+  char fingerID[10];
+  sprintf(fingerID, "%d", id);
+  u8g.firstPage();
+  do {
+    u8g.drawStr(0, 22, "ID : ");
+    u8g.drawStr(50, 22, fingerID);
+  } while (u8g.nextPage());
   p = -1;
-  Serial.println("같은 손가락을 다시 올려주세요");
+
+  //  Serial.println("같은 손가락을 다시 올려주세요");
+  u8g.firstPage();
+  do {
+    u8g.drawStr(0, 22, "put on same");
+    u8g.drawStr(0, 44, "finger");
+  } while (u8g.nextPage());
+
   while (p != FINGERPRINT_OK) {
     p = finger.getImage();
     switch (p) {
@@ -255,13 +338,27 @@ uint8_t getFingerprintEnroll() {
         Serial.print(".");
         break;
       case FINGERPRINT_PACKETRECIEVEERR:
-        Serial.println("통신 에러");
+        //        Serial.println("통신 에러");
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "communication");
+          u8g.drawStr(0, 44, "error");
+        } while (u8g.nextPage());
         break;
       case FINGERPRINT_IMAGEFAIL:
-        Serial.println("이미지 변환 에러");
+        //        Serial.println("이미지 변환 에러");
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "image convert");
+          u8g.drawStr(0, 44, "error");
+        } while (u8g.nextPage());
         break;
       default:
-        Serial.println("알 수 없는 에러");
+        //        Serial.println("알 수 없는 에러");
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "unknown error");
+        } while (u8g.nextPage());
         break;
     }
   }
@@ -271,13 +368,27 @@ uint8_t getFingerprintEnroll() {
   p = finger.image2Tz(2);
   switch (p) {
     case FINGERPRINT_OK:
-      Serial.println("이미지 변환 완료");
+      //      Serial.println("이미지 변환 완료");
+      u8g.firstPage();
+      do {
+        u8g.drawStr(0, 22, "image convert");
+        u8g.drawStr(0, 44, "complete");
+      } while (u8g.nextPage());
       break;
     case FINGERPRINT_IMAGEMESS:
-      Serial.println("이미지가 너무 큽니다.");
+      //      Serial.println("이미지가 너무 큽니다.");
+      u8g.firstPage();
+      do {
+        u8g.drawStr(0, 22, "image to big");
+      } while (u8g.nextPage());
       return p;
     case FINGERPRINT_PACKETRECIEVEERR:
-      Serial.println("Communication error");
+      //      Serial.println("Communication error");
+      u8g.firstPage();
+      do {
+        u8g.drawStr(0, 22, "communication");
+        u8g.drawStr(0, 44, "error");
+      } while (u8g.nextPage());
       return p;
     case FINGERPRINT_FEATUREFAIL:
       Serial.println("Could not find fingerprint features");
@@ -286,7 +397,11 @@ uint8_t getFingerprintEnroll() {
       Serial.println("Could not find fingerprint features");
       return p;
     default:
-      Serial.println("알 수 없는 에러");
+      //      Serial.println("알 수 없는 에러");
+      u8g.firstPage();
+      do {
+        u8g.drawStr(0, 22, "unknown error");
+      } while (u8g.nextPage());
       return p;
   }
 
@@ -296,39 +411,94 @@ uint8_t getFingerprintEnroll() {
   if (p == FINGERPRINT_OK) {
     Serial.println("데이터 일치!");
   } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
-    Serial.println("통신 에러");
+    //    Serial.println("통신 에러");
+    u8g.firstPage();
+    do {
+      u8g.drawStr(0, 22, "communication");
+      u8g.drawStr(0, 44, "error");
+    } while (u8g.nextPage());
     return p;
   } else if (p == FINGERPRINT_ENROLLMISMATCH) {
-    Serial.println("지문이 일치하지 않습니다.");
+    //    Serial.println("지문이 일치하지 않습니다.");
+    u8g.firstPage();
+    do {
+      u8g.drawStr(0, 22, "fingerprint");
+      u8g.drawStr(0, 44, "not same");
+    } while (u8g.nextPage());
     return p;
   } else {
-    Serial.println("알 수 없는 에러");
+    //    Serial.println("알 수 없는 에러");
+    u8g.firstPage();
+    do {
+      u8g.drawStr(0, 22, "unknown error");
+    } while (u8g.nextPage());
     return p;
   }
-  Serial.print("다음 ID로 저장합니다. ");  Serial.println(id);
-  Serial.print("ID "); Serial.println(id);
+
+  //  Serial.print("다음 ID로 저장합니다. ");  Serial.println(id);
+  //  Serial.print("ID "); Serial.println(id);
   p = finger.storeModel(id);
   if (p == FINGERPRINT_OK) {
-    Serial.println("저장완료!");
+
+    //    Serial.println("저장완료!");
+    u8g.firstPage();
+    do {
+      u8g.drawStr(0, 22, "save complete");
+      u8g.drawStr(0, 44, "with ID : ");
+      u8g.drawStr(100, 44, fingerID);
+    } while (u8g.nextPage());
 
     //eeprom에 지문에 대한 각도를 저장하는 부분
     EEPROM.write(id * 5 + ADDR_FING_KEY, id);
     EEPROM.write(id * 5 + ADDR_MONI_HEIGHT, photo_cnt_move);
     EEPROM.write(id * 5 + ADDR_MONI_ANGLE, photo_cnt_angle);//모니터 각도
     EEPROM.write(id * 5 + ADDR_BOOK_HEIGHT, photo_cnt_desk);// 독서대 로 변경할것
+
     return 1;
+
   } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
-    Serial.println("통신 에러");
+
+    //    Serial.println("통신 에러");
+    u8g.firstPage();
+    do {
+      u8g.drawStr(0, 22, "communication");
+      u8g.drawStr(0, 44, "error");
+    } while (u8g.nextPage());
+
     return p;
+
   } else if (p == FINGERPRINT_BADLOCATION) {
-    Serial.println("해당 ID로 저장할 수 없습니다.");
+
+    //    Serial.println("해당 ID로 저장할 수 없습니다.");
+    u8g.firstPage();
+    do {
+      u8g.drawStr(0, 22, "cannot save id");
+      u8g.drawStr(0, 44, fingerID);
+    } while (u8g.nextPage());
+
     return p;
+
   } else if (p == FINGERPRINT_FLASHERR) {
-    Serial.println("플래시 메모리에 저장중에 오류가 발생하였습니다.");
+
+    //    Serial.println("플래시 메모리에 저장중에 오류가 발생하였습니다.");
+    u8g.firstPage();
+    do {
+      u8g.drawStr(0, 22, "error while");
+      u8g.drawStr(0, 44, "saving storage");
+    } while (u8g.nextPage());
+
     return p;
+
   } else {
-    Serial.println("알 수 없는 에러");
+
+    //    Serial.println("알 수 없는 에러");
+    u8g.firstPage();
+    do {
+      u8g.drawStr(0, 22, "unknown error");
+    } while (u8g.nextPage());
+
     return p;
+
   }
 }
 
@@ -435,14 +605,14 @@ int getFingerprintIDez() {
     if (photo_cnt_angle != moni_angle) {
       fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, (photo_cnt_angle < moni_angle ? 1 : -1));
     }
-    
+
     pre_photo_angle = curr_photo_angle;
   }
 
   //모니터 각도 멈춤
   fCylinderSTOP(moniterAngleCylinder);
   //모니터 각도 멈춤
-  
+
   return finger.fingerID;
 }
 
@@ -456,13 +626,18 @@ int getFingerprintIDez() {
 
 void modeSet() {
   mode = (++mode) % 2;
-  Serial.print("BTN0  "); Serial.print("mode : "); Serial.println(mode);
+  //  Serial.print("BTN0  "); Serial.print("mode : "); Serial.println(mode);
+
+  u8g.firstPage();
+  do {
+    u8g.drawStr(0, 22, "mode : ");
+    u8g.drawStr(70, 22, mode == 1 ? "1" : "0");
+  } while (u8g.nextPage());
 }
 
 // the setup routine runs once when you press reset:
 void setup() {
   Serial.begin(9600);
-  pinMode(LEDPIN, OUTPUT);
   pinMode(deskCylinderR, OUTPUT);
   pinMode(deskCylinderL, OUTPUT);
   pinMode(moveCylinderR, OUTPUT);
@@ -472,17 +647,35 @@ void setup() {
   //pinMode(touchBTN0pin, INPUT);
   //attachInterrupt(digitalPinToInterrupt(touchBTN0pin), modeSet, FALLING);
 
+  u8g.setFont(u8g_font_unifont);
   MsTimer2::set(100, count);
+  u8g.firstPage();
 
+  do {
+    u8g.drawStr(0, 22, "initialize");
+    u8g.drawStr(0, 44, "fingerprint");
+  } while (u8g.nextPage());
 
-  Serial.println("지문인식 센서 초기화중...");
   finger.begin(57600);
   if (finger.verifyPassword()) {
-    Serial.println("지문인식 센서 설정 완료");
+
     finger.getTemplateCount();
-    Serial.print("센서에 저장된 지문은 "); Serial.print(finger.templateCount); Serial.println("개 입니다.");
+    char fingCnt[10];
+    sprintf(fingCnt, "%d", finger.templateCount);
+    u8g.firstPage();
+
+    do {
+      u8g.drawStr(0, 22, "initialize fin");
+      u8g.drawStr(0, 44, fingCnt);
+      u8g.drawStr(10, 44, " saved");
+    } while (u8g.nextPage());
+
   } else {
-    Serial.println("지문인식 센서를 찾지 못했습니다.");
+    u8g.firstPage();
+    do {
+      u8g.drawStr(0, 22, "sensor");
+      u8g.drawStr(0, 44, "not found");
+    } while (u8g.nextPage());
   }
   //    //지문을 전부 초기화
   //    finger.emptyDatabase();
@@ -597,7 +790,6 @@ void loop() {
         tim1_run_flag = 0;
         stopTimer(touchBTN2pin);
         fCylinderSTOP(deskCylinder);
-        digitalWrite(LEDPIN, LOW);//TEST
       }
     }
   }
@@ -670,7 +862,6 @@ void loop() {
           tim1_run_flag = 1;
           startTimer(touchBTN2pin);
           fCylinderDOWN(moniterMoveCylinder);
-          digitalWrite(LEDPIN, HIGH);//TEST
         }
       }
 
@@ -682,7 +873,6 @@ void loop() {
         tim1_run_flag = 0;
         stopTimer(touchBTN2pin);
         fCylinderSTOP(moniterMoveCylinder);
-        digitalWrite(LEDPIN, LOW);//TEST
       }
     }
   }
