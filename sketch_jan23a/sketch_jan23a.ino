@@ -25,6 +25,8 @@
 #define RX 13
 
 #define PHOTOSENSOR1 2
+#define PHOTOSENSOR2 3
+#define PHOTOSENSOR3 10
 
 
 //메모리에 지문에 대한 각도값을 저장하기 위해 정의하는 이름
@@ -391,13 +393,13 @@ int getFingerprintIDez() {
   //현재 포토센서 값과 지문인식으로 불러온 값이 같아질 때 까지 이동
   while ((photo_cnt_desk != book_height) or (photo_cnt_move != moni_height)) {
     int curr_photo_desk = digitalRead(PHOTOSENSOR1);
-    int curr_photo_move = digitalRead(PHOTOSENSOR1);
+    int curr_photo_move = digitalRead(PHOTOSENSOR3);
 
     if (photo_cnt_desk != book_height) {
       fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, (photo_cnt_desk < book_height ? 1 : -1));
     }
     if (photo_cnt_move != moni_height) {
-      fPhoto_test(pre_photo_move , curr_photo_desk, &photo_cnt_move, (photo_cnt_move < moni_height ? 1 : -1));
+      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, (photo_cnt_move < moni_height ? 1 : -1));
     }
 
     pre_photo_desk = curr_photo_desk;
@@ -427,8 +429,8 @@ int getFingerprintIDez() {
     fCylinderDOWN(moniterAngleCylinder);
   }
 
-  while (photo_cnt_angle != angle_height) {
-    int curr_photo_angle = digitalRead(PHOTOSENSOR1);
+  while (photo_cnt_angle != moni_angle) {
+    int curr_photo_angle = digitalRead(PHOTOSENSOR2);
 
     if (photo_cnt_angle != moni_angle) {
       fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, (photo_cnt_angle < moni_angle ? 1 : -1));
@@ -523,8 +525,8 @@ void loop() {
 
   /*-- -*/
   int curr_photo_desk = digitalRead(PHOTOSENSOR1);
-  int curr_photo_angle = digitalRead(PHOTOSENSOR1);
-  int curr_photo_move = digitalRead(PHOTOSENSOR1);
+  int curr_photo_angle = digitalRead(PHOTOSENSOR2);
+  int curr_photo_move = digitalRead(PHOTOSENSOR3);
 
 
   if (btn_tim == 0 || btn_tim == touchBTN0pin) { //모드0번 0버튼 독서대 위로  : 누르는 동안 작동
