@@ -87,22 +87,12 @@ struct Cylinder moniterAngleCylinder = { angleCylinderR, angleCylinderL};
 void fCylinderSTOP(struct Cylinder mCylinder) {
   //  Serial.println("Cylinder stop");
 
-  u8g.firstPage();
-  do {
-    u8g.drawStr(0, 22, "Cylinder stop");
-  } while (u8g.nextPage());
-
   digitalWrite(mCylinder.pinR, LOW);
   digitalWrite(mCylinder.pinL, LOW);
 }
 
 void fCylinderUP (struct Cylinder mCylinder) {
   //  Serial.print("Cylinder up  ");
-
-  u8g.firstPage();
-  do {
-    u8g.drawStr(0, 22, "Cylinder up");
-  } while (u8g.nextPage());
 
   //  Serial.print("pin : ");
   //  Serial.print(mCylinder.pinR);
@@ -115,11 +105,6 @@ void fCylinderUP (struct Cylinder mCylinder) {
 
 void fCylinderDOWN (struct Cylinder mCylinder) {
   //  Serial.print("Cylinder down  ");
-
-  u8g.firstPage();
-  do {
-    u8g.drawStr(0, 22, "Cylinder down");
-  } while (u8g.nextPage());
 
   //  Serial.print("pin : ");
   //  Serial.print(mCylinder.pinR);
@@ -518,31 +503,56 @@ int getFingerprintIDez() {
   if (p != FINGERPRINT_OK)  return -1;
 
   // found a match!
-  Serial.print("Found ID #"); Serial.print(finger.fingerID);
-  Serial.print(" 신뢰도 "); Serial.println(finger.confidence);
+  //  Serial.print("Found ID #"); Serial.print(finger.fingerID);
+  //  Serial.print(" 신뢰도 "); Serial.println(finger.confidence);
+
+  char fingerID[10];
+  sprintf(fingerID, "%d", finger.fingerID);
+  u8g.firstPage();
+  do {
+    u8g.drawStr(0, 22, "Found ID : ");
+    u8g.drawStr(110, 22, fingerID);
+  } while (u8g.nextPage());
+  delay(200);
 
   moni_height = EEPROM.read(finger.fingerID * 5 + ADDR_MONI_HEIGHT);
   moni_angle = EEPROM.read(finger.fingerID * 5 + ADDR_MONI_ANGLE);
   book_height = EEPROM.read(finger.fingerID * 5 + ADDR_BOOK_HEIGHT);
 
-  Serial.print("모니터 높이 : ");
-  Serial.println(moni_height);
-  Serial.print("모니터 각도 : ");
-  Serial.println(moni_angle);
-  Serial.print("책상높이 : ");
-  Serial.println(book_height);
+  //  Serial.print("모니터 높이 : ");
+  //  Serial.println(moni_height);
+  //  Serial.print("모니터 각도 : ");
+  //  Serial.println(moni_angle);
+  //  Serial.print("책상높이 : ");
+  //  Serial.println(book_height);
+
+  char str_height[10];
+  char str_desk[10];
+  char str_angle[10];
+  sprintf(str_height, "%d", moni_height);
+  sprintf(str_desk, "%d", book_height);
+  sprintf(str_angle, "%d", moni_angle);
+  u8g.firstPage();
+  do {
+    u8g.drawStr(0, 11, "height : ");
+    u8g.drawStr(90, 11, str_height);
+
+    u8g.drawStr(0, 33, "desk : ");
+    u8g.drawStr(90, 33, str_desk);
+
+    u8g.drawStr(0, 55, "angle : ");
+    u8g.drawStr(90, 55, str_angle);
+  } while (u8g.nextPage());
 
   //독서대 실린더를 확인해서 증감시키는 부분
   if (photo_cnt_desk < book_height) {
 
     //독서대 실린더 늘임
-    Serial.println("desk up");
     fCylinderUP(deskCylinder);
   }
   else if (photo_cnt_desk > book_height) {
 
     //독서대 실린더 줄임
-    Serial.println("desk down");//TEST
     fCylinderDOWN(deskCylinder);
   }
 
@@ -550,13 +560,11 @@ int getFingerprintIDez() {
   if (photo_cnt_move < moni_height) {
 
     //모니터 높이 실린더 늘임
-    Serial.println("monitor up");
     fCylinderUP(moniterMoveCylinder);
   }
   else if (photo_cnt_move > moni_height) {
 
     //모니터 높이 실린더 줄임
-    Serial.println("monitor down");//TEST
     fCylinderDOWN(moniterMoveCylinder);
   }
 
@@ -589,13 +597,11 @@ int getFingerprintIDez() {
   if (photo_cnt_angle < moni_angle) {
 
     //모니터 각도 실린더 늘임
-    Serial.println("monitor angle up");
     fCylinderUP(moniterAngleCylinder);
   }
   else if (photo_cnt_angle > moni_angle) {
 
     //모니터 각도 실린더 줄임
-    Serial.println("monitor angle down");//TEST
     fCylinderDOWN(moniterAngleCylinder);
   }
 
@@ -803,14 +809,23 @@ void loop() {
         fingerId = getFingerprintIDez();
         delay(50);
         if (fingerId == -1) {
-          Serial.println("지문을 찾을 수 없습니다.");
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "put on finger");
+          } while (u8g.nextPage());
         }
         else {
-          Serial.print("지문을 찾았습니다..");
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "found");
+          } while (u8g.nextPage());
         }
         if (tim4_cnt > 30) {
           stopTimer(touchBTN3pin);
-          Serial.print("시간 초과");
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "Time out");
+          } while (u8g.nextPage());
           break;
         }
 
