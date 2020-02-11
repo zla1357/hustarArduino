@@ -763,8 +763,6 @@ void loop() {
       }
 
       fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, 1);
-
-
     }
     else {
       if (tim1_run_flag == 1) {
@@ -779,7 +777,6 @@ void loop() {
   if ( (btn_tim == 0 || btn_tim == touchBTN2pin) and mode == 0) { //모드0번 2버튼 독서대 아래로  : 누르는 동안 작동
     if (analogRead(touchBTN2pin) >= 900) {
       if (desk_flag == false) { // 터치가 되었을 때 엣지체크
-        Serial.println("desk down BTN2");//TEST
         desk_flag = true;
         if (tim1_run_flag == 0) { //타이머가 실행되고 있는지 체크
           tim1_run_flag = 1;
@@ -802,7 +799,6 @@ void loop() {
 
   if ((btn_tim == 0 || btn_tim == touchBTN3pin) and mode == 0) { //모드0번 3버튼 : 지문 인식
     if (analogRead(touchBTN3pin) >= 900) {
-      Serial.println("손가락을 올려주세요");
       int fingerId = -1;
       startTimer(touchBTN3pin);
       while (fingerId == -1) {
@@ -846,7 +842,6 @@ void loop() {
   if ((btn_tim == 0 || btn_tim == touchBTN1pin) and mode == 1) { //모드1번 1버튼 모니터 위로  : 누르는 동안 작동
     if (analogRead(touchBTN1pin) >= 900) {
       if (angle_flag == false) {// 터치가 되었을 때 엣지체크
-        Serial.println("Moniter up BTN1");//TEST
         angle_flag = true;
         //타이머가 실행되고 있는지 체크
         if (tim1_run_flag == 0) {
@@ -870,7 +865,6 @@ void loop() {
   if ( (btn_tim == 0 || btn_tim == touchBTN2pin) and mode == 1) { //모드1번 2버튼 모니터 아래로  : 누르는 동안 작동
     if (analogRead(touchBTN2pin) >= 900) {
       if (angle_flag == false) {// 터치가 되었을 때 엣지체크
-        Serial.println("Moniter down BTN2");//TEST
         angle_flag = true;
         //타이머가 실행되고 있는지 체크
         if (tim1_run_flag == 0) {
@@ -895,7 +889,6 @@ void loop() {
   if ( (btn_tim == 0 || btn_tim == touchBTN3pin) and mode == 1) { //모드1번 3버튼 모니터 각도 위로  : 누르는 동안 작동
     if (analogRead(touchBTN3pin) >= 900) {
       if (move_flag == false) { // 터치가 되었을 때 엣지체크
-        Serial.println("Moniter angle up BTN3");//TEST
         move_flag = true;
         //타이머가 실행되고 있는지 체크
         if (tim1_run_flag == 0) {
@@ -920,7 +913,6 @@ void loop() {
     if (analogRead(touchBTN4pin) >= 900) {
       // 터치가 되었을 때 엣지체크
       if (move_flag == false) {
-        Serial.println("Moniter angle down BTN4");//TEST
         move_flag = true;
         //타이머가 실행되고 있는지 체크
         if (tim1_run_flag == 0) {
