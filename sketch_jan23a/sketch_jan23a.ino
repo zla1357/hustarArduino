@@ -92,7 +92,8 @@ void fCylinderSTOP(struct Cylinder mCylinder) {
   digitalWrite(mCylinder.pinL, LOW);
 }
 
-void fCylinderUP (struct Cylinder mCylinder) {
+void fCylinder
+ (struct Cylinder mCylinder) {
   //  Serial.print("Cylinder up  ");
 
   //  Serial.print("pin : ");
