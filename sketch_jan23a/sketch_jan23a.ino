@@ -6,7 +6,8 @@
 
 U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE | U8G_I2C_OPT_DEV_0); // I2C / TWI
 
-#define touchBTN0pin A0 //interruptPin
+#define touchBTN0pin A0
+//#define touchBTN0pin 18 //interruptPin
 #define touchBTN1pin A1
 #define touchBTN2pin A2
 #define touchBTN3pin A3
@@ -631,10 +632,10 @@ int getFingerprintIDez() {
 */
 
 void modeSet() {
-  if (btn_tim != 0){
-    return;
-  }
-  
+  //  if (btn_tim != 0) {
+  //    return;
+  //  }
+
   mode = (++mode) % 2;
   //  Serial.print("BTN0  "); Serial.print("mode : "); Serial.println(mode);
 
@@ -654,8 +655,9 @@ void setup() {
   pinMode(moveCylinderL, OUTPUT);
   pinMode(angleCylinderR, OUTPUT);
   pinMode(angleCylinderL, OUTPUT);
-  //pinMode(touchBTN0pin, INPUT);
-  //attachInterrupt(digitalPinToInterrupt(touchBTN0pin), modeSet, FALLING);
+
+  //  pinMode(touchBTN0pin, INPUT);
+  //  attachInterrupt(digitalPinToInterrupt(touchBTN0pin), modeSet, FALLING);
 
   u8g.setFont(u8g_font_unifont);
   MsTimer2::set(100, count);
@@ -731,8 +733,7 @@ void loop() {
   int curr_photo_angle = digitalRead(PHOTOSENSOR2);
   int curr_photo_move = digitalRead(PHOTOSENSOR3);
 
-
-  if (btn_tim == 0 || btn_tim == touchBTN0pin) { //모드0번 0버튼 독서대 위로  : 누르는 동안 작동
+  if (btn_tim == 0 || btn_tim == touchBTN0pin) { //모드버튼
     if (analogRead(touchBTN0pin) >= 900) {
       if (mode_flag == false) { // 터치가 되었을 때 엣지체크
         mode_flag = true;
@@ -757,12 +758,17 @@ void loop() {
     if (analogRead(touchBTN1pin) >= 900) {
 
       if (desk_flag == false) { // 터치가 되었을 때 엣지체크
-        Serial.println("desk up BTN1");//TEST
+
         desk_flag = true;
         if (tim1_run_flag == 0) { //타이머가 실행되고 있는지 체크
           tim1_run_flag = 1;
           startTimer(touchBTN1pin);
           fCylinderUP(deskCylinder);
+
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "desk up");
+          } while (u8g.nextPage());
         }
       }
 
@@ -774,6 +780,11 @@ void loop() {
         tim1_run_flag = 0;
         stopTimer(touchBTN1pin);
         fCylinderSTOP(deskCylinder);
+
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "desk stop");
+        } while (u8g.nextPage());
       }
     }
   }
@@ -786,6 +797,11 @@ void loop() {
           tim1_run_flag = 1;
           startTimer(touchBTN2pin);
           fCylinderDOWN(deskCylinder);
+
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "desk down");
+          } while (u8g.nextPage());
         }
       }
 
@@ -797,6 +813,11 @@ void loop() {
         tim1_run_flag = 0;
         stopTimer(touchBTN2pin);
         fCylinderSTOP(deskCylinder);
+
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "desk stop");
+        } while (u8g.nextPage());
       }
     }
   }
@@ -815,10 +836,7 @@ void loop() {
           } while (u8g.nextPage());
         }
         else {
-          u8g.firstPage();
-          do {
-            u8g.drawStr(0, 22, "found");
-          } while (u8g.nextPage());
+          stopTimer(touchBTN3pin);
         }
         if (tim4_cnt > 30) {
           stopTimer(touchBTN3pin);
@@ -852,6 +870,11 @@ void loop() {
           tim1_run_flag = 1;
           startTimer(touchBTN1pin);
           fCylinderUP(moniterMoveCylinder);
+
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "monitor up");
+          } while (u8g.nextPage());
         }
       }
 
@@ -863,6 +886,11 @@ void loop() {
         tim1_run_flag = 0;
         stopTimer(touchBTN1pin);
         fCylinderSTOP(moniterMoveCylinder);
+
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "monitor stop");
+        } while (u8g.nextPage());
       }
     }
   }
@@ -875,6 +903,11 @@ void loop() {
           tim1_run_flag = 1;
           startTimer(touchBTN2pin);
           fCylinderDOWN(moniterMoveCylinder);
+
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "monitor down");
+          } while (u8g.nextPage());
         }
       }
 
@@ -886,6 +919,13 @@ void loop() {
         tim1_run_flag = 0;
         stopTimer(touchBTN2pin);
         fCylinderSTOP(moniterMoveCylinder);
+
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "monitor stop");
+        } while (u8g.nextPage());
+
+
       }
     }
   }
@@ -899,6 +939,11 @@ void loop() {
           tim1_run_flag = 1;
           startTimer(touchBTN3pin);
           fCylinderUP(moniterAngleCylinder);
+
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "angle up");
+          } while (u8g.nextPage());
         }
       }
       fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, 1);
@@ -909,6 +954,11 @@ void loop() {
         tim1_run_flag = 0;
         stopTimer(touchBTN3pin);
         fCylinderSTOP(moniterAngleCylinder);
+
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "angle stop");
+        } while (u8g.nextPage());
       }
     }
   }
@@ -923,6 +973,11 @@ void loop() {
           tim1_run_flag = 1;
           startTimer(touchBTN4pin);
           fCylinderDOWN(moniterAngleCylinder);
+
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "angle down");
+          } while (u8g.nextPage());
         }
       }
       fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, -1);
@@ -933,6 +988,11 @@ void loop() {
         tim1_run_flag = 0;
         stopTimer(touchBTN4pin);
         fCylinderSTOP(moniterAngleCylinder);
+
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "angle stop");
+        } while (u8g.nextPage());
       }
     }
   }
