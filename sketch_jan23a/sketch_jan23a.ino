@@ -631,6 +631,10 @@ int getFingerprintIDez() {
 */
 
 void modeSet() {
+  if (btn_tim != 0){
+    return;
+  }
+  
   mode = (++mode) % 2;
   //  Serial.print("BTN0  "); Serial.print("mode : "); Serial.println(mode);
 
