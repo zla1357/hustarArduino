@@ -667,6 +667,13 @@ void setup() {
   photo_cnt_move = EEPROM.read(ADDR_CURRHEI);
   photo_cnt_angle = EEPROM.read(ADDR_CURRANGLE);
 
+//  Serial.println("desk");
+//  Serial.println(photo_cnt_desk);
+//  Serial.println("move");
+//  Serial.println(photo_cnt_move);
+//  Serial.println("angle");
+//  Serial.println(photo_cnt_angle);
+
   u8g.setFont(u8g_font_unifont);
   MsTimer2::set(100, count);
   u8g.firstPage();
