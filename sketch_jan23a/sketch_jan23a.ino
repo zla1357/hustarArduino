@@ -660,6 +660,75 @@ void modeSet() {
   } while (u8g.nextPage());
 }
 
+void fCylinderReset(void) {
+
+  //독서대 실린더를 확인해서 증감시키는 부분
+  if (photo_cnt_desk > 0) {
+    fCylinderDOWN(deskCylinder);
+  } else if (photo_cnt_desk < 0) {
+    photo_cnt_desk = 0 ;
+    fCylinderSTOP(deskCylinder);
+  }
+
+  //모니터 높이 실린더를 확인해서 증감시키는 부분
+  if (photo_cnt_move > 0) {
+    fCylinderDOWN(moniterMoveCylinder);
+  } else if (photo_cnt_move < 0) {
+    photo_cnt_move = 0 ;
+    fCylinderSTOP(moniterMoveCylinder);
+  }
+
+  //현재 포토센서 값과 지문인식으로 불러온 값이 같아질 때 까지 이동
+  while ((photo_cnt_desk != 0) or (photo_cnt_move != 0)) {
+    int curr_photo_desk = digitalRead(PHOTOSENSOR1);
+    int curr_photo_move = digitalRead(PHOTOSENSOR3);
+
+    if (photo_cnt_desk != 0) {
+      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, -1, ADDR_CURRDESK);
+    }
+    if (photo_cnt_move != 0) {
+      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, -1, ADDR_CURRHEI);
+    }
+    pre_photo_desk = curr_photo_desk;
+    pre_photo_move = curr_photo_move;
+  }
+
+  //독서대 멈춤
+  fCylinderSTOP(deskCylinder);
+  //독서대 멈춤
+
+  //모니터 높이 멈춤
+  fCylinderSTOP(moniterMoveCylinder);
+  //모니터 높이 멈춤
+
+  //모니터 높이조절이 멈춘 후에 모니터 각도를 확인하여 움직임
+  //모니터 각도 실린더를 확인해서 증감시키는 부분
+  if (photo_cnt_angle > 0) {
+
+    //모니터 각도 실린더 늘임
+    fCylinderDOWN(moniterAngleCylinder);
+  }
+  else if (photo_cnt_angle < 0) {
+    photo_cnt_angle = 0 ;
+    fCylinderSTOP(moniterAngleCylinder);
+  }
+
+  while (photo_cnt_angle != 0) {
+    int curr_photo_angle = digitalRead(PHOTOSENSOR2);
+
+    if (photo_cnt_angle != 0) {
+      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, -1, ADDR_CURRANGLE);
+    }
+
+    pre_photo_angle = curr_photo_angle;
+  }
+
+  //모니터 각도 멈춤
+  fCylinderSTOP(moniterAngleCylinder);
+  //모니터 각도 멈춤
+
+}
+
 // the setup routine runs once when you press reset:
 void setup() {
   Serial.begin(9600);
@@ -727,8 +796,8 @@ void fPhoto_test(int pre_photo, int curr_photo, int *cnt, int x, int cylinder) {
       (*cnt)++;
 
     } else if ( x == -1) {
-      if ((*cnt) < 2) {
-        (*cnt) = 1;
+      if ((*cnt) < 1) {
+        (*cnt) = 0;
       }
       else {
         (*cnt)--;
@@ -1274,8 +1343,51 @@ void loop() {
     }
   }//지문삭제 main 끝
 
-  //if(analogRead(touchBTN3pin) >= 900 and mode == 1){Serial.println("BTN3");}
-  //if(analogRead(touchBTN4pin) >= 900 and mode == 1){Serial.println("BTN4");}
+
+  if ( (btn_tim == 0 || btn_tim == touchBTN3pin) and mode == 2) { //모드2번 3버튼 : 현재 실린더 위치를 초기화
+    if (analogRead(touchBTN3pin) >= 900) {
+      //현재 포토 센서가 0이 될때 까지
+      char str_height[10];
+      char str_desk[10];
+      char str_angle[10];
+      while ((photo_cnt_move > 0) or (photo_cnt_desk > 0) or (photo_cnt_angle > 0) ) {
+        sprintf(str_height, "%d", photo_cnt_move);
+        sprintf(str_desk, "%d", photo_cnt_desk);
+        sprintf(str_angle, "%d", photo_cnt_angle);
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 11, "height : ");
+          u8g.drawStr(90, 11, str_height);
+
+          u8g.drawStr(0, 33, "desk : ");
+          u8g.drawStr(90, 33, str_desk);
+
+          u8g.drawStr(0, 55, "angle : ");
+          u8g.drawStr(90, 55, str_angle);
+        } while (u8g.nextPage());
+
+        // 홀센서 읽기
+
+        fCylinderReset();
+        sprintf(str_height, "%d", photo_cnt_move);
+        sprintf(str_desk, "%d", photo_cnt_desk);
+        sprintf(str_angle, "%d", photo_cnt_angle);
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 11, "height : ");
+          u8g.drawStr(90, 11, str_height);
+
+          u8g.drawStr(0, 33, "desk : ");
+          u8g.drawStr(90, 33, str_desk);
+
+          u8g.drawStr(0, 55, "angle : ");
+          u8g.drawStr(90, 55, str_angle);
+        } while (u8g.nextPage());
+      }
+
+    } else {
+    }
+  }
 
   pre_photo_move = curr_photo_move;
   pre_photo_desk = curr_photo_desk;
