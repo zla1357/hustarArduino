@@ -169,7 +169,17 @@ void saveFingerPrint(int btn)                     // 지문을 읽어서 저장�
 {
   finger.getTemplateCount();
 
-  id = finger.templateCount + 1;
+  for (int i = 1; i < 205; i++) {
+    Serial.println(i);
+    Serial.println("  ");
+    //point
+    if (EEPROM.read(i * 5 + ADDR_FING_KEY) == 255) {
+      Serial.print(i);
+      id = i;
+      break;
+    }
+  }
+
   if (id == 0) {
     return;
   }
@@ -704,8 +714,9 @@ void setup() {
       u8g.drawStr(0, 44, "not found");
     } while (u8g.nextPage());
   }
-  //    //지문을 전부 초기화
-  //    finger.emptyDatabase();
+
+  //      //지문을 전부 초기화
+  //      finger.emptyDatabase();
 }
 
 //포토다이오드 센서 값에 따라 포토다이오드 카운트를 증감시키는 함수
@@ -1241,10 +1252,10 @@ void loop() {
           stopTimer(touchBTN3pin);
           u8g.firstPage();
           char err_code[10] ;
-          sprintf(err_code,"%d",fingerId);
+          sprintf(err_code, "%d", fingerId);
           do {
             u8g.drawStr(0, 22, "error : ");
-            u8g.drawStr(0, 44,err_code);
+            u8g.drawStr(0, 44, err_code);
           } while (u8g.nextPage());
           break;
         }
