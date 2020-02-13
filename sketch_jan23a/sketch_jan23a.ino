@@ -42,9 +42,9 @@ U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE | U8G_I2C_OPT_DEV_0); // I2C / TWI
 #define ADDR_BOOK_HEIGHT 3    //독서대 높이
 
 //현재 실린더값이 저장되는 메모리 주소
-#define CURRDESK 4092
-#define CURRHEI 4091
-#define CURRANGLE 4090
+#define ADDR_CURRDESK 4092
+#define ADDR_CURRHEI 4091
+#define ADDR_CURRANGLE 4090
 
 bool mode_flag = false;
 
@@ -580,10 +580,10 @@ int getFingerprintIDez() {
     int curr_photo_move = digitalRead(PHOTOSENSOR3);
 
     if (photo_cnt_desk != book_height) {
-      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, (photo_cnt_desk < book_height ? 1 : -1), CURRDESK);
+      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, (photo_cnt_desk < book_height ? 1 : -1), ADDR_CURRDESK);
     }
     if (photo_cnt_move != moni_height) {
-      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, (photo_cnt_move < moni_height ? 1 : -1), CURRHEI);
+      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, (photo_cnt_move < moni_height ? 1 : -1), ADDR_CURRHEI);
     }
 
     pre_photo_desk = curr_photo_desk;
@@ -615,7 +615,7 @@ int getFingerprintIDez() {
     int curr_photo_angle = digitalRead(PHOTOSENSOR2);
 
     if (photo_cnt_angle != moni_angle) {
-      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, (photo_cnt_angle < moni_angle ? 1 : -1), CURRANGLE);
+      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, (photo_cnt_angle < moni_angle ? 1 : -1), ADDR_CURRANGLE);
     }
 
     pre_photo_angle = curr_photo_angle;
@@ -638,13 +638,9 @@ int getFingerprintIDez() {
 
 void modeSet() {
 
-  //  mode = (++mode) % 2;
+  mode = (++mode) % 3;
   //  Serial.print("BTN0  "); Serial.print("mode : "); Serial.println(mode);
-  mode++;
 
-  if (mode > 2) {
-    mode = 0;
-  }
   char str_mode[10];
   sprintf(str_mode, "%d", mode);
   u8g.firstPage();
@@ -667,9 +663,9 @@ void setup() {
   //  pinMode(touchBTN0pin, INPUT);
   //  attachInterrupt(digitalPinToInterrupt(touchBTN0pin), modeSet, FALLING);
 
-  photo_cnt_desk = EEPROM.read(CURRDESK);
-  photo_cnt_move = EEPROM.read(CURRHEI);
-  photo_cnt_angle = EEPROM.read(CURRANGLE);
+  photo_cnt_desk = EEPROM.read(ADDR_CURRDESK);
+  photo_cnt_move = EEPROM.read(ADDR_CURRHEI);
+  photo_cnt_angle = EEPROM.read(ADDR_CURRANGLE);
 
   u8g.setFont(u8g_font_unifont);
   MsTimer2::set(100, count);
@@ -747,6 +743,8 @@ void loop() {
   int curr_photo_angle = digitalRead(PHOTOSENSOR2);
   int curr_photo_move = digitalRead(PHOTOSENSOR3);
 
+  int cylinderInit = 0;
+
   if (btn_tim == 0 || btn_tim == touchBTN0pin) { //모드버튼
     if (analogRead(touchBTN0pin) >= 900) {
       if (mode_flag == false) { // 터치가 되었을 때 엣지체크
@@ -786,7 +784,7 @@ void loop() {
         }
       }
 
-      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, 1, CURRDESK);
+      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, 1, ADDR_CURRDESK);
     }
     else {
       if (tim1_run_flag == 1) {
@@ -819,7 +817,7 @@ void loop() {
         }
       }
 
-      fPhoto_test(pre_photo_desk, curr_photo_desk, &photo_cnt_desk, -1, CURRDESK);
+      fPhoto_test(pre_photo_desk, curr_photo_desk, &photo_cnt_desk, -1, ADDR_CURRDESK);
     }
     else {
       if (tim1_run_flag == 1) {
@@ -892,7 +890,7 @@ void loop() {
         }
       }
 
-      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, 1, CURRHEI);
+      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, 1, ADDR_CURRHEI);
     }
     else {
       if (tim1_run_flag == 1) {
@@ -925,7 +923,7 @@ void loop() {
         }
       }
 
-      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, -1, CURRHEI);
+      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, -1, ADDR_CURRHEI);
     }
     else {
       if (tim1_run_flag == 1) {
@@ -960,7 +958,7 @@ void loop() {
           } while (u8g.nextPage());
         }
       }
-      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, 1, CURRANGLE);
+      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, 1, ADDR_CURRANGLE);
     }
     else {
       if (tim1_run_flag == 1) {
@@ -994,7 +992,7 @@ void loop() {
           } while (u8g.nextPage());
         }
       }
-      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, -1, CURRANGLE);
+      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, -1, ADDR_CURRANGLE);
     }
     else {
       if (tim1_run_flag == 1) {
@@ -1007,6 +1005,91 @@ void loop() {
         do {
           u8g.drawStr(0, 22, "angle stop");
         } while (u8g.nextPage());
+      }
+    }
+  }
+
+  if ( (btn_tim == 0 || btn_tim == touchBTN1pin) and mode == 2) { //모드3번 누르면 작동
+    if (analogRead(touchBTN1pin) >= 900) {
+      if (move_flag == false) { // 터치가 되었을 때 엣지체크
+        move_flag = true;
+        //타이머가 실행되고 있는지 체크
+        if (tim1_run_flag == 0) {
+          tim1_run_flag = 1;
+          startTimer(touchBTN1pin);
+        }
+      }
+    }
+    else {
+      if (tim1_run_flag == 1) {
+        move_flag = false;
+        tim1_run_flag = 0;
+
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "cylinder init?");
+          u8g.drawStr(0, 44, "btn1: Y, btn2: N");
+        } while (u8g.nextPage());
+
+        while (cylinderInit == 0) {
+          //1번버튼을 누르면 실린더 값 초기화
+          if (analogRead(touchBTN1pin) >= 900) {
+            if (move_flag == false) { // 터치가 되었을 때 엣지체크
+              move_flag = true;
+              //타이머가 실행되고 있는지 체크
+              if (tim1_run_flag == 0) {
+                tim1_run_flag = 1;
+                startTimer(touchBTN1pin);
+              }
+            }
+          }
+          else {
+            if (tim1_run_flag == 1 && btn_tim == touchBTN1pin) {
+              move_flag = false;
+              tim1_run_flag = 0;
+              stopTimer(touchBTN1pin);
+              cylinderInit = 1;
+            }
+          }
+
+          //2번버튼을 누르면 취소
+          if (analogRead(touchBTN2pin) >= 900) {
+            if (move_flag == false) { // 터치가 되었을 때 엣지체크
+              move_flag = true;
+              //타이머가 실행되고 있는지 체크
+              if (tim1_run_flag == 0) {
+                tim1_run_flag = 1;
+                startTimer(touchBTN2pin);
+              }
+            }
+          }
+          else {
+            if (tim1_run_flag == 1 && btn_tim == touchBTN2pin) {
+              move_flag = false;
+              tim1_run_flag = 0;
+              stopTimer(touchBTN2pin);
+
+              u8g.firstPage();
+              do {
+                u8g.drawStr(0, 22, "CANCEL");
+              } while (u8g.nextPage());
+
+              cylinderInit = 2;
+            }
+          }
+        }
+        if (cylinderInit == 1) {
+
+          Serial.println("initializing");
+          EEPROM.write(ADDR_CURRANGLE, 0);
+          EEPROM.write(ADDR_CURRDESK, 0);
+          EEPROM.write(ADDR_CURRHEI, 0);
+
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "cylinder init");
+          } while (u8g.nextPage());
+        }
       }
     }
   }
