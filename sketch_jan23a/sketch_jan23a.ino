@@ -667,12 +667,12 @@ void setup() {
   photo_cnt_move = EEPROM.read(ADDR_CURRHEI);
   photo_cnt_angle = EEPROM.read(ADDR_CURRANGLE);
 
-//  Serial.println("desk");
-//  Serial.println(photo_cnt_desk);
-//  Serial.println("move");
-//  Serial.println(photo_cnt_move);
-//  Serial.println("angle");
-//  Serial.println(photo_cnt_angle);
+  //  Serial.println("desk");
+  //  Serial.println(photo_cnt_desk);
+  //  Serial.println("move");
+  //  Serial.println(photo_cnt_move);
+  //  Serial.println("angle");
+  //  Serial.println(photo_cnt_angle);
 
   u8g.setFont(u8g_font_unifont);
   MsTimer2::set(100, count);
@@ -731,6 +731,123 @@ void fPhoto_test(int pre_photo, int curr_photo, int *cnt, int x, int cylinder) {
   }
 }
 
+//지문 삭제 함수 시작
+uint8_t deleteFingerPrint(int btn)                     // 지문을 찾아 삭제하는 함수
+{
+
+  uint8_t p = finger.getImage(); //지문 인식
+  startTimer(btn); //ggg
+  do {
+    p = finger.getImage(); //지문 인식
+    if (tim4_cnt > 30) {
+      u8g.firstPage();
+      do {
+        u8g.drawStr(0, 22, "Search_Time out");
+      } while (u8g.nextPage());
+      Serial.print("1111");
+      return 51;
+    }
+  } while (p != FINGERPRINT_OK);
+
+  //Serial.print("finger.getImage : ");
+  if (p != FINGERPRINT_OK) {
+    return 52;
+  }
+  p = finger.image2Tz();
+  if (p != FINGERPRINT_OK) {
+    Serial.println("errer : image2Tz");
+    return 53;
+  }
+
+  p = finger.fingerFastSearch();
+  if (p != FINGERPRINT_OK) {
+    Serial.println("errer : fingerFastSearch");
+    return 54;
+  }
+
+  char fingerID[10];
+  sprintf(fingerID, "%d", finger.fingerID);
+  u8g.firstPage();
+  do {
+    u8g.drawStr(0, 22, "Found ID : ");
+    u8g.drawStr(110, 22, fingerID);
+  } while (u8g.nextPage());
+  delay(200);
+
+  // found a match!
+  //Serial.print("Found ID #"); Serial.print(finger.fingerID);
+  //Serial.print(" 신뢰도 "); Serial.println(finger.confidence);
+  int l_id = finger.fingerID;
+
+  if (l_id == 0) {// ID #0 not allowed, try again!
+    Serial.println("아이디를 찾지 못하였습니다.");
+    return 55;
+  }
+
+  // 여기
+  Serial.print("ID ");
+  Serial.print(l_id);
+  int moni_height = EEPROM.read(l_id * 5 + ADDR_MONI_HEIGHT);
+  int moni_angle = EEPROM.read(l_id * 5 + ADDR_MONI_ANGLE);
+  int book_height = EEPROM.read(l_id * 5 + ADDR_BOOK_HEIGHT);
+
+  Serial.print("수정 전 모니터 높이 : ");
+  Serial.println(moni_height);
+  Serial.print("수정 전 모니터 각도 : ");
+  Serial.println(moni_angle);
+  Serial.print("수정 전 책상높이 : ");
+  Serial.println(book_height);
+  //초기값
+  EEPROM.write(l_id * 5 + ADDR_FING_KEY, -1);
+  EEPROM.write(l_id * 5 + ADDR_MONI_HEIGHT, 30);
+  EEPROM.write(l_id * 5 + ADDR_MONI_ANGLE, 30);//모니터 각도
+  EEPROM.write(l_id * 5 + ADDR_BOOK_HEIGHT, 30);// 독서대 로 변경할것
+
+  moni_height = EEPROM.read(l_id * 5 + ADDR_MONI_HEIGHT);
+  moni_angle = EEPROM.read(l_id * 5 + ADDR_MONI_ANGLE);
+  book_height = EEPROM.read(l_id * 5 + ADDR_BOOK_HEIGHT);
+
+  char str_height[10];
+  char str_desk[10];
+  char str_angle[10];
+  sprintf(str_height, "%d", moni_height);
+  sprintf(str_desk, "%d", book_height);
+  sprintf(str_angle, "%d", moni_angle);
+  u8g.firstPage();
+  do {
+    u8g.drawStr(0, 11, "height : ");
+    u8g.drawStr(90, 11, str_height);
+
+    u8g.drawStr(0, 33, "desk : ");
+    u8g.drawStr(90, 33, str_desk);
+
+    u8g.drawStr(0, 55, "angle : ");
+    u8g.drawStr(90, 55, str_angle);
+  } while (u8g.nextPage());
+
+  p = finger.deleteModel(l_id);
+  if (p == FINGERPRINT_OK) {
+    Serial.println("Deleted!");
+  } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
+    Serial.println("Communication error");
+    return p;
+  } else if (p == FINGERPRINT_BADLOCATION) {
+    Serial.println("Could not delete in that location");
+    return p;
+  } else if (p == FINGERPRINT_FLASHERR) {
+    Serial.println("Error writing to flash");
+    return p;
+  } else {
+    Serial.print("Unknown error: 0x"); Serial.println(p, HEX);
+    return p;
+  }
+  u8g.firstPage();
+  do {
+    u8g.drawStr(0, 22, "delete complete");
+  } while (u8g.nextPage());
+  return 60;
+}
+//지문 삭제 함수 끝
 
 // the loop routine runs over and over again forever:
 void loop() {
@@ -865,7 +982,6 @@ void loop() {
           } while (u8g.nextPage());
           break;
         }
-
       }
     }
     else {
@@ -1100,6 +1216,52 @@ void loop() {
       }
     }
   }
+
+  //지문삭제 main 시작
+  if ( (btn_tim == 0 || btn_tim == touchBTN2pin) and mode == 2) { //모드2번 2버튼 : 지문 삭제
+    if (analogRead(touchBTN2pin) >= 900) {
+      int fingerId = -1;
+      startTimer(touchBTN3pin);
+      while (fingerId == -1) {
+        if (fingerId == -1) {
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "put on finger");
+          } while (u8g.nextPage());
+        }
+        else {
+          stopTimer(touchBTN3pin);
+        }
+        fingerId = deleteFingerPrint(touchBTN3pin);
+        Serial.print("main fingerID : ");
+        Serial.print(fingerId);
+        delay(50);
+
+        if (fingerId > 50) {
+          stopTimer(touchBTN3pin);
+          u8g.firstPage();
+          char err_code[10] ;
+          sprintf(err_code,"%d",fingerId);
+          do {
+            u8g.drawStr(0, 22, "error : ");
+            u8g.drawStr(0, 44,err_code);
+          } while (u8g.nextPage());
+          break;
+        }
+        if (tim4_cnt > 30) {
+          stopTimer(touchBTN3pin);
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "Time out");
+          } while (u8g.nextPage());
+          break;
+        }
+
+      }
+    }
+    else {
+    }
+  }//지문삭제 main 끝
 
   //if(analogRead(touchBTN3pin) >= 900 and mode == 1){Serial.println("BTN3");}
   //if(analogRead(touchBTN4pin) >= 900 and mode == 1){Serial.println("BTN4");}
