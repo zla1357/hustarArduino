@@ -41,14 +41,19 @@ U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE | U8G_I2C_OPT_DEV_0); // I2C / TWI
 #define ADDR_MONI_ANGLE 2     //모니터 각도
 #define ADDR_BOOK_HEIGHT 3    //독서대 높이
 
+//현재 실린더값이 저장되는 메모리 주소
+#define CURRDESK 4092
+#define CURRHEI 4091
+#define CURRANGLE 4090
+
 bool mode_flag = false;
 
 bool desk_flag = false;
 bool angle_flag = false;
 bool move_flag = false;
 
-int pre_photo_move = 0;
-int photo_cnt_move = 0;
+int pre_photo_move = 0; //포토센서의 이전 디지털 값
+int photo_cnt_move = 0; //포토센서의 카운트값(실린더의 이동거리)
 //int curr_photo_angle = 0;
 
 int pre_photo_angle = 0;
@@ -92,8 +97,7 @@ void fCylinderSTOP(struct Cylinder mCylinder) {
   digitalWrite(mCylinder.pinL, LOW);
 }
 
-void fCylinder
- (struct Cylinder mCylinder) {
+void fCylinderUP (struct Cylinder mCylinder) {
   //  Serial.print("Cylinder up  ");
 
   //  Serial.print("pin : ");
@@ -576,10 +580,10 @@ int getFingerprintIDez() {
     int curr_photo_move = digitalRead(PHOTOSENSOR3);
 
     if (photo_cnt_desk != book_height) {
-      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, (photo_cnt_desk < book_height ? 1 : -1));
+      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, (photo_cnt_desk < book_height ? 1 : -1), CURRDESK);
     }
     if (photo_cnt_move != moni_height) {
-      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, (photo_cnt_move < moni_height ? 1 : -1));
+      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, (photo_cnt_move < moni_height ? 1 : -1), CURRHEI);
     }
 
     pre_photo_desk = curr_photo_desk;
@@ -611,7 +615,7 @@ int getFingerprintIDez() {
     int curr_photo_angle = digitalRead(PHOTOSENSOR2);
 
     if (photo_cnt_angle != moni_angle) {
-      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, (photo_cnt_angle < moni_angle ? 1 : -1));
+      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, (photo_cnt_angle < moni_angle ? 1 : -1), CURRANGLE);
     }
 
     pre_photo_angle = curr_photo_angle;
@@ -633,17 +637,20 @@ int getFingerprintIDez() {
 */
 
 void modeSet() {
-  //  if (btn_tim != 0) {
-  //    return;
-  //  }
 
-  mode = (++mode) % 2;
+  //  mode = (++mode) % 2;
   //  Serial.print("BTN0  "); Serial.print("mode : "); Serial.println(mode);
+  mode++;
 
+  if (mode > 2) {
+    mode = 0;
+  }
+  char str_mode[10];
+  sprintf(str_mode, "%d", mode);
   u8g.firstPage();
   do {
     u8g.drawStr(0, 22, "mode : ");
-    u8g.drawStr(70, 22, mode == 1 ? "1" : "0");
+    u8g.drawStr(70, 22, str_mode);
   } while (u8g.nextPage());
 }
 
@@ -659,6 +666,10 @@ void setup() {
 
   //  pinMode(touchBTN0pin, INPUT);
   //  attachInterrupt(digitalPinToInterrupt(touchBTN0pin), modeSet, FALLING);
+
+  photo_cnt_desk = EEPROM.read(CURRDESK);
+  photo_cnt_move = EEPROM.read(CURRHEI);
+  photo_cnt_angle = EEPROM.read(CURRANGLE);
 
   u8g.setFont(u8g_font_unifont);
   MsTimer2::set(100, count);
@@ -696,7 +707,7 @@ void setup() {
 
 //포토다이오드 센서 값에 따라 포토다이오드 카운트를 증감시키는 함수
 //이전 포토다이오드값, 현재 포토다이오드값, 증감시킬 카운트 변수의 포인터, 증감값
-void fPhoto_test(int pre_photo, int curr_photo, int *cnt, int x) {
+void fPhoto_test(int pre_photo, int curr_photo, int *cnt, int x, int cylinder) {
   if (curr_photo == 0 and pre_photo == 1) {
     if ( x == 1) {
       (*cnt)++;
@@ -709,6 +720,8 @@ void fPhoto_test(int pre_photo, int curr_photo, int *cnt, int x) {
         (*cnt)--;
       }
     }
+
+    EEPROM.write(cylinder, *cnt);
 
     Serial.print(*cnt);
     Serial.print("  ");
@@ -773,7 +786,7 @@ void loop() {
         }
       }
 
-      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, 1);
+      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, 1, CURRDESK);
     }
     else {
       if (tim1_run_flag == 1) {
@@ -806,7 +819,7 @@ void loop() {
         }
       }
 
-      fPhoto_test(pre_photo_desk, curr_photo_desk, &photo_cnt_desk, -1);
+      fPhoto_test(pre_photo_desk, curr_photo_desk, &photo_cnt_desk, -1, CURRDESK);
     }
     else {
       if (tim1_run_flag == 1) {
@@ -879,7 +892,7 @@ void loop() {
         }
       }
 
-      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, 1);
+      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, 1, CURRHEI);
     }
     else {
       if (tim1_run_flag == 1) {
@@ -912,7 +925,7 @@ void loop() {
         }
       }
 
-      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, -1);
+      fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, -1, CURRHEI);
     }
     else {
       if (tim1_run_flag == 1) {
@@ -947,7 +960,7 @@ void loop() {
           } while (u8g.nextPage());
         }
       }
-      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, 1);
+      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, 1, CURRANGLE);
     }
     else {
       if (tim1_run_flag == 1) {
@@ -981,7 +994,7 @@ void loop() {
           } while (u8g.nextPage());
         }
       }
-      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, -1);
+      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, -1, CURRANGLE);
     }
     else {
       if (tim1_run_flag == 1) {
