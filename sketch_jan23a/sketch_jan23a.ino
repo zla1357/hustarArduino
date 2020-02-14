@@ -693,7 +693,6 @@ void modeSet() {
       u8g.drawStr(70, 22, str_mode);
     } while (u8g.nextPage());
   }
-  Serial.print("end of modeset");
 }
 
 void fCylinderReset(void) {
@@ -701,6 +700,7 @@ void fCylinderReset(void) {
   //독서대 실린더를 확인해서 증감시키는 부분
   if (photo_cnt_desk > 0) {
     fCylinderDOWN(deskCylinder);
+    auto_flag = true;
   } else if (photo_cnt_desk < 0) {
     photo_cnt_desk = 0 ;
     fCylinderSTOP(deskCylinder);
@@ -709,13 +709,14 @@ void fCylinderReset(void) {
   //모니터 높이 실린더를 확인해서 증감시키는 부분
   if (photo_cnt_move > 0) {
     fCylinderDOWN(moniterMoveCylinder);
+    auto_flag = true;
   } else if (photo_cnt_move < 0) {
     photo_cnt_move = 0 ;
     fCylinderSTOP(moniterMoveCylinder);
   }
 
   //현재 포토센서 값과 지문인식으로 불러온 값이 같아질 때 까지 이동
-  while ((photo_cnt_desk != 0) or (photo_cnt_move != 0)) {
+  while (((photo_cnt_desk != 0) or (photo_cnt_move != 0)) and auto_stop == false) {
     int curr_photo_desk = digitalRead(PHOTOSENSOR1);
     int curr_photo_move = digitalRead(PHOTOSENSOR3);
 
@@ -737,19 +738,22 @@ void fCylinderReset(void) {
   fCylinderSTOP(moniterMoveCylinder);
   //모니터 높이 멈춤
 
+  auto_flag = false;
+
   //모니터 높이조절이 멈춘 후에 모니터 각도를 확인하여 움직임
   //모니터 각도 실린더를 확인해서 증감시키는 부분
   if (photo_cnt_angle > 0) {
 
     //모니터 각도 실린더 늘임
     fCylinderDOWN(moniterAngleCylinder);
+    auto_flag = true;
   }
   else if (photo_cnt_angle < 0) {
     photo_cnt_angle = 0 ;
     fCylinderSTOP(moniterAngleCylinder);
   }
 
-  while (photo_cnt_angle != 0) {
+  while (photo_cnt_angle != 0 and auto_stop == false) {
     int curr_photo_angle = digitalRead(PHOTOSENSOR2);
 
     if (photo_cnt_angle != 0) {
@@ -763,6 +767,8 @@ void fCylinderReset(void) {
   fCylinderSTOP(moniterAngleCylinder);
   //모니터 각도 멈춤
 
+  auto_flag = false;
+  auto_stop = false;
 }
 
 // the setup routine runs once when you press reset:
@@ -967,7 +973,7 @@ uint8_t deleteFingerPrint(int btn)                     // 지문을 찾아 삭�
 
 // the loop routine runs over and over again forever:
 void loop() {
-  
+
   // read the input on analog pin 0:
 
   // print out the value you read:
@@ -1387,7 +1393,7 @@ void loop() {
       char str_height[10];
       char str_desk[10];
       char str_angle[10];
-      while ((photo_cnt_move > 0) or (photo_cnt_desk > 0) or (photo_cnt_angle > 0) ) {
+      if ((photo_cnt_move > 0) or (photo_cnt_desk > 0) or (photo_cnt_angle > 0)) {
         sprintf(str_height, "%d", photo_cnt_move);
         sprintf(str_desk, "%d", photo_cnt_desk);
         sprintf(str_angle, "%d", photo_cnt_angle);
@@ -1406,20 +1412,20 @@ void loop() {
         // 홀센서 읽기
 
         fCylinderReset();
-        sprintf(str_height, "%d", photo_cnt_move);
-        sprintf(str_desk, "%d", photo_cnt_desk);
-        sprintf(str_angle, "%d", photo_cnt_angle);
-        u8g.firstPage();
-        do {
-          u8g.drawStr(0, 11, "height : ");
-          u8g.drawStr(90, 11, str_height);
-
-          u8g.drawStr(0, 33, "desk : ");
-          u8g.drawStr(90, 33, str_desk);
-
-          u8g.drawStr(0, 55, "angle : ");
-          u8g.drawStr(90, 55, str_angle);
-        } while (u8g.nextPage());
+//        sprintf(str_height, "%d", photo_cnt_move);
+//        sprintf(str_desk, "%d", photo_cnt_desk);
+//        sprintf(str_angle, "%d", photo_cnt_angle);
+//        u8g.firstPage();
+//        do {
+//          u8g.drawStr(0, 11, "height : ");
+//          u8g.drawStr(90, 11, str_height);
+//
+//          u8g.drawStr(0, 33, "desk : ");
+//          u8g.drawStr(90, 33, str_desk);
+//
+//          u8g.drawStr(0, 55, "angle : ");
+//          u8g.drawStr(90, 55, str_angle);
+//        } while (u8g.nextPage());
       }
 
       u8g.firstPage();
