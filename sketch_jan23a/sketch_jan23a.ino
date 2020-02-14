@@ -46,6 +46,8 @@ U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE | U8G_I2C_OPT_DEV_0); // I2C / TWI
 #define ADDR_CURRHEI 4091
 #define ADDR_CURRANGLE 4090
 
+//각 실린더들의 최솟값, 최댓값
+
 bool mode_flag = false;
 bool desk_flag = false;
 bool angle_flag = false;
@@ -830,6 +832,27 @@ void setup() {
   //      finger.emptyDatabase();
 }
 
+void print_photo_oled() {
+  char str_desk[4];
+  char str_move[4];
+  char str_angle[4];
+  sprintf(str_move, "%d", photo_cnt_move);
+  sprintf(str_desk, "%d", photo_cnt_desk);
+  sprintf(str_angle, "%d", photo_cnt_angle);
+
+  u8g.firstPage();
+  do {
+    u8g.drawStr(0, 33, "desk : ");
+    u8g.drawStr(90, 33, str_desk);
+
+    u8g.drawStr(0, 11, "height : ");
+    u8g.drawStr(90, 11, str_move);
+
+    u8g.drawStr(0, 55, "angle : ");
+    u8g.drawStr(90, 55, str_angle);
+  } while (u8g.nextPage());
+}
+
 //포토다이오드 센서 값에 따라 포토다이오드 카운트를 증감시키는 함수
 //이전 포토다이오드값, 현재 포토다이오드값, 증감시킬 카운트 변수의 포인터, 증감값
 void fPhoto_test(int pre_photo, int curr_photo, int *cnt, int x, int cylinder) {
@@ -847,6 +870,8 @@ void fPhoto_test(int pre_photo, int curr_photo, int *cnt, int x, int cylinder) {
     }
 
     EEPROM.write(cylinder, *cnt);
+
+    print_photo_oled();
 
     Serial.print(*cnt);
     Serial.print("  ");
@@ -1412,20 +1437,20 @@ void loop() {
         // 홀센서 읽기
 
         fCylinderReset();
-//        sprintf(str_height, "%d", photo_cnt_move);
-//        sprintf(str_desk, "%d", photo_cnt_desk);
-//        sprintf(str_angle, "%d", photo_cnt_angle);
-//        u8g.firstPage();
-//        do {
-//          u8g.drawStr(0, 11, "height : ");
-//          u8g.drawStr(90, 11, str_height);
-//
-//          u8g.drawStr(0, 33, "desk : ");
-//          u8g.drawStr(90, 33, str_desk);
-//
-//          u8g.drawStr(0, 55, "angle : ");
-//          u8g.drawStr(90, 55, str_angle);
-//        } while (u8g.nextPage());
+        //        sprintf(str_height, "%d", photo_cnt_move);
+        //        sprintf(str_desk, "%d", photo_cnt_desk);
+        //        sprintf(str_angle, "%d", photo_cnt_angle);
+        //        u8g.firstPage();
+        //        do {
+        //          u8g.drawStr(0, 11, "height : ");
+        //          u8g.drawStr(90, 11, str_height);
+        //
+        //          u8g.drawStr(0, 33, "desk : ");
+        //          u8g.drawStr(90, 33, str_desk);
+        //
+        //          u8g.drawStr(0, 55, "angle : ");
+        //          u8g.drawStr(90, 55, str_angle);
+        //        } while (u8g.nextPage());
       }
 
       u8g.firstPage();
