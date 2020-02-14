@@ -6,8 +6,8 @@
 
 U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE | U8G_I2C_OPT_DEV_0); // I2C / TWI
 
-#define touchBTN0pin A0
-//#define touchBTN0pin 18 //interruptPin
+//#define touchBTN0pin A0
+#define touchBTN0pin 18 //interruptPin
 #define touchBTN1pin A1
 #define touchBTN2pin A2
 #define touchBTN3pin A3
@@ -47,10 +47,10 @@ U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE | U8G_I2C_OPT_DEV_0); // I2C / TWI
 #define ADDR_CURRANGLE 4090
 
 bool mode_flag = false;
-
 bool desk_flag = false;
 bool angle_flag = false;
 bool move_flag = false;
+bool auto_flag = false;
 
 int pre_photo_move = 0; //포토센서의 이전 디지털 값
 int photo_cnt_move = 0; //포토센서의 카운트값(실린더의 이동거리)
@@ -172,7 +172,7 @@ void saveFingerPrint(int btn)                     // 지문을 읽어서 저장�
   for (int i = 1; i < 205; i++) {
     Serial.println(i);
     Serial.println("  ");
-    //point
+
     if (EEPROM.read(i * 5 + ADDR_FING_KEY) == 255) {
       Serial.print(i);
       id = i;
@@ -577,11 +577,13 @@ int getFingerprintIDez() {
 
     //모니터 높이 실린더 늘임
     fCylinderUP(moniterMoveCylinder);
+    auto_flag = true;
   }
   else if (photo_cnt_move > moni_height) {
 
     //모니터 높이 실린더 줄임
     fCylinderDOWN(moniterMoveCylinder);
+    auto_flag = true;
   }
 
   //현재 포토센서 값과 지문인식으로 불러온 값이 같아질 때 까지 이동
@@ -608,17 +610,21 @@ int getFingerprintIDez() {
   fCylinderSTOP(moniterMoveCylinder);
   //모니터 높이 멈춤
 
+  auto_flag = false;
+
   //모니터 높이조절이 멈춘 후에 모니터 각도를 확인하여 움직임
   //모니터 각도 실린더를 확인해서 증감시키는 부분
   if (photo_cnt_angle < moni_angle) {
 
     //모니터 각도 실린더 늘임
     fCylinderUP(moniterAngleCylinder);
+    auto_flag = true;
   }
   else if (photo_cnt_angle > moni_angle) {
 
     //모니터 각도 실린더 줄임
     fCylinderDOWN(moniterAngleCylinder);
+    auto_flag = true;
   }
 
   while (photo_cnt_angle != moni_angle) {
@@ -635,6 +641,8 @@ int getFingerprintIDez() {
   fCylinderSTOP(moniterAngleCylinder);
   //모니터 각도 멈춤
 
+  auto_flag = false;
+
   return finger.fingerID;
 }
 
@@ -648,8 +656,17 @@ int getFingerprintIDez() {
 
 void modeSet() {
 
+  if (auto_flag == true) {
+    fCylinderSTOP(deskCylinder);
+    fCylinderSTOP(moniterMoveCylinder);
+    fCylinderSTOP(moniterAngleCylinder);
+    stopTimer(btn_tim);
+    return;
+  }
+  if (btn_tim != 0) {
+    return;
+  }
   mode = (++mode) % 3;
-  //  Serial.print("BTN0  "); Serial.print("mode : "); Serial.println(mode);
 
   char str_mode[10];
   sprintf(str_mode, "%d", mode);
@@ -658,6 +675,7 @@ void modeSet() {
     u8g.drawStr(0, 22, "mode : ");
     u8g.drawStr(70, 22, str_mode);
   } while (u8g.nextPage());
+
 }
 
 void fCylinderReset(void) {
@@ -739,8 +757,8 @@ void setup() {
   pinMode(angleCylinderR, OUTPUT);
   pinMode(angleCylinderL, OUTPUT);
 
-  //  pinMode(touchBTN0pin, INPUT);
-  //  attachInterrupt(digitalPinToInterrupt(touchBTN0pin), modeSet, FALLING);
+  pinMode(touchBTN0pin, INPUT);
+  attachInterrupt(digitalPinToInterrupt(touchBTN0pin), modeSet, FALLING);
 
   photo_cnt_desk = EEPROM.read(ADDR_CURRDESK);
   photo_cnt_move = EEPROM.read(ADDR_CURRHEI);
@@ -949,25 +967,25 @@ void loop() {
 
   int cylinderInit = 0;
 
-  if (btn_tim == 0 || btn_tim == touchBTN0pin) { //모드버튼
-    if (analogRead(touchBTN0pin) >= 900) {
-      if (mode_flag == false) { // 터치가 되었을 때 엣지체크
-        mode_flag = true;
-        if (tim1_run_flag == 0) { //타이머가 실행되고 있는지 체크
-          tim1_run_flag = 1;
-          startTimer(touchBTN0pin);
-          modeSet();
-        }
-      }
-    }
-    else {
-      if (tim1_run_flag == 1) {
-        mode_flag = false;
-        tim1_run_flag = 0;
-        stopTimer(touchBTN0pin);
-      }
-    }
-  }
+  //  if (btn_tim == 0 || btn_tim == touchBTN0pin) { //모드버튼
+  //    if (analogRead(touchBTN0pin) >= 900) {
+  //      if (mode_flag == false) { // 터치가 되었을 때 엣지체크
+  //        mode_flag = true;
+  //        if (tim1_run_flag == 0) { //타이머가 실행되고 있는지 체크
+  //          tim1_run_flag = 1;
+  //          startTimer(touchBTN0pin);
+  //          modeSet();
+  //        }
+  //      }
+  //    }
+  //    else {
+  //      if (tim1_run_flag == 1) {
+  //        mode_flag = false;
+  //        tim1_run_flag = 0;
+  //        stopTimer(touchBTN0pin);
+  //      }
+  //    }
+  //  }
 
 
   if ( (btn_tim == 0 || btn_tim == touchBTN1pin) and mode == 0) { //모드0번 1버튼 독서대 위로  : 누르는 동안 작동
@@ -1384,6 +1402,11 @@ void loop() {
           u8g.drawStr(90, 55, str_angle);
         } while (u8g.nextPage());
       }
+
+      u8g.firstPage();
+      do {
+        u8g.drawStr(0, 22, "move complete!");
+      } while (u8g.nextPage());
 
     } else {
     }
