@@ -50,7 +50,12 @@ bool mode_flag = false;
 bool desk_flag = false;
 bool angle_flag = false;
 bool move_flag = false;
+
+//자동으로 실린더가 움직이고 있음을 나타내는 변수
 bool auto_flag = false;
+
+//자동으로 움직이는 실린더를 멈추게 하는 변수
+bool auto_stop = false;
 
 int pre_photo_move = 0; //포토센서의 이전 디지털 값
 int photo_cnt_move = 0; //포토센서의 카운트값(실린더의 이동거리)
@@ -565,11 +570,13 @@ int getFingerprintIDez() {
 
     //독서대 실린더 늘임
     fCylinderUP(deskCylinder);
+    auto_flag = true;
   }
   else if (photo_cnt_desk > book_height) {
 
     //독서대 실린더 줄임
     fCylinderDOWN(deskCylinder);
+    auto_flag = true;
   }
 
   //모니터 높이 실린더를 확인해서 증감시키는 부분
@@ -587,7 +594,7 @@ int getFingerprintIDez() {
   }
 
   //현재 포토센서 값과 지문인식으로 불러온 값이 같아질 때 까지 이동
-  while ((photo_cnt_desk != book_height) or (photo_cnt_move != moni_height)) {
+  while (((photo_cnt_desk != book_height) or (photo_cnt_move != moni_height)) and auto_stop == false) {
     int curr_photo_desk = digitalRead(PHOTOSENSOR1);
     int curr_photo_move = digitalRead(PHOTOSENSOR3);
 
@@ -627,7 +634,7 @@ int getFingerprintIDez() {
     auto_flag = true;
   }
 
-  while (photo_cnt_angle != moni_angle) {
+  while ((photo_cnt_angle != moni_angle) and auto_stop == false) {
     int curr_photo_angle = digitalRead(PHOTOSENSOR2);
 
     if (photo_cnt_angle != moni_angle) {
@@ -642,6 +649,7 @@ int getFingerprintIDez() {
   //모니터 각도 멈춤
 
   auto_flag = false;
+  auto_stop = false;
 
   return finger.fingerID;
 }
@@ -657,25 +665,35 @@ int getFingerprintIDez() {
 void modeSet() {
 
   if (auto_flag == true) {
+    auto_flag = false;
+    auto_stop = true;
     fCylinderSTOP(deskCylinder);
+    delay(50);
     fCylinderSTOP(moniterMoveCylinder);
+    delay(50);
     fCylinderSTOP(moniterAngleCylinder);
+    delay(50);
     stopTimer(btn_tim);
-    return;
-  }
-  if (btn_tim != 0) {
-    return;
-  }
-  mode = (++mode) % 3;
 
-  char str_mode[10];
-  sprintf(str_mode, "%d", mode);
-  u8g.firstPage();
-  do {
-    u8g.drawStr(0, 22, "mode : ");
-    u8g.drawStr(70, 22, str_mode);
-  } while (u8g.nextPage());
+    u8g.firstPage();
+    do {
+      u8g.drawStr(0, 22, "cylinder stop");
+    } while (u8g.nextPage());
+  }
+  else if (btn_tim != 0) {
+  }
+  else {
+    mode = (++mode) % 3;
 
+    char str_mode[10];
+    sprintf(str_mode, "%d", mode);
+    u8g.firstPage();
+    do {
+      u8g.drawStr(0, 22, "mode : ");
+      u8g.drawStr(70, 22, str_mode);
+    } while (u8g.nextPage());
+  }
+  Serial.print("end of modeset");
 }
 
 void fCylinderReset(void) {
@@ -949,6 +967,7 @@ uint8_t deleteFingerPrint(int btn)                     // 지문을 찾아 삭�
 
 // the loop routine runs over and over again forever:
 void loop() {
+  
   // read the input on analog pin 0:
 
   // print out the value you read:
