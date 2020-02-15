@@ -30,7 +30,6 @@ U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE | U8G_I2C_OPT_DEV_0); // I2C / TWI
 #define PHOTOSENSOR2 3
 #define PHOTOSENSOR3 10
 
-
 //메모리에 지문에 대한 각도값을 저장하기 위해 정의하는 이름
 //한 id에 대한 메모리 크기는 5바이트로 설정
 //저장되는 메모리 위치는 id * 5 + addr
@@ -52,6 +51,7 @@ bool mode_flag = false;
 bool desk_flag = false;
 bool angle_flag = false;
 bool move_flag = false;
+bool int_flag = true;
 
 //자동으로 실린더가 움직이고 있음을 나타내는 변수
 bool auto_flag = false;
@@ -70,8 +70,6 @@ int photo_cnt_angle = 0;
 int pre_photo_desk = 0;
 int photo_cnt_desk = 0;
 //int curr_photo_desk = 0;
-
-
 
 uint8_t tim1_run_flag = 0;  //타이머가 실행되고 있는지 여부를 알리는 flag
 uint8_t tim_cnt = 0;        //타이머가 실행되는 시간을 누적하는 변수
@@ -665,7 +663,9 @@ int getFingerprintIDez() {
 */
 
 void modeSet() {
-  Serial.println("a7");
+  if (int_flag == false) {
+    return;
+  }
   if (auto_flag == true) {
     auto_flag = false;
     auto_stop = true;
@@ -1061,6 +1061,7 @@ void loop() {
     else {
       if (tim1_run_flag == 1) {
         desk_flag = false;
+        int_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN1pin);
         fCylinderSTOP(deskCylinder);
@@ -1069,6 +1070,7 @@ void loop() {
         do {
           u8g.drawStr(0, 22, "desk stop");
         } while (u8g.nextPage());
+        int_flag = true;
       }
     }
   }
@@ -1094,6 +1096,7 @@ void loop() {
     else {
       if (tim1_run_flag == 1) {
         desk_flag = false;
+        int_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN2pin);
         fCylinderSTOP(deskCylinder);
@@ -1102,6 +1105,7 @@ void loop() {
         do {
           u8g.drawStr(0, 22, "desk stop");
         } while (u8g.nextPage());
+        int_flag = true;
       }
     }
   }
@@ -1165,6 +1169,7 @@ void loop() {
     }
     else {
       if (tim1_run_flag == 1) {
+        int_flag = false;
         angle_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN1pin);
@@ -1174,6 +1179,7 @@ void loop() {
         do {
           u8g.drawStr(0, 22, "monitor stop");
         } while (u8g.nextPage());
+        int_flag = true;
       }
     }
   }
@@ -1199,6 +1205,7 @@ void loop() {
     else {
       if (tim1_run_flag == 1) {
         angle_flag = false;
+        int_flag = false;        
         tim1_run_flag = 0;
         stopTimer(touchBTN2pin);
         fCylinderSTOP(moniterMoveCylinder);
@@ -1207,8 +1214,7 @@ void loop() {
         do {
           u8g.drawStr(0, 22, "monitor stop");
         } while (u8g.nextPage());
-
-
+        int_flag = true;
       }
     }
   }
@@ -1234,6 +1240,7 @@ void loop() {
     else {
       if (tim1_run_flag == 1) {
         move_flag = false;
+        int_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN3pin);
         fCylinderSTOP(moniterAngleCylinder);
@@ -1242,6 +1249,7 @@ void loop() {
         do {
           u8g.drawStr(0, 22, "angle stop");
         } while (u8g.nextPage());
+        int_flag = true;
       }
     }
   }
@@ -1268,6 +1276,7 @@ void loop() {
     else {
       if (tim1_run_flag == 1) {
         move_flag = false;
+        int_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN4pin);
         fCylinderSTOP(moniterAngleCylinder);
@@ -1276,6 +1285,7 @@ void loop() {
         do {
           u8g.drawStr(0, 22, "angle stop");
         } while (u8g.nextPage());
+        int_flag = true;
       }
     }
   }
