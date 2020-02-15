@@ -6,8 +6,8 @@
 
 U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE | U8G_I2C_OPT_DEV_0); // I2C / TWI
 
-//#define touchBTN0pin A0
-#define touchBTN0pin 18 //interruptPin
+//#define touchBTN0pin A7
+#define touchBTN0pin 19 //interruptPin
 #define touchBTN1pin A1
 #define touchBTN2pin A2
 #define touchBTN3pin A3
@@ -665,7 +665,7 @@ int getFingerprintIDez() {
 */
 
 void modeSet() {
-
+  Serial.println("a7");
   if (auto_flag == true) {
     auto_flag = false;
     auto_stop = true;
@@ -1355,6 +1355,9 @@ void loop() {
           EEPROM.write(ADDR_CURRANGLE, 0);
           EEPROM.write(ADDR_CURRDESK, 0);
           EEPROM.write(ADDR_CURRHEI, 0);
+          photo_cnt_desk = 0;
+          photo_cnt_move = 0;
+          photo_cnt_angle = 0;
 
           u8g.firstPage();
           do {
