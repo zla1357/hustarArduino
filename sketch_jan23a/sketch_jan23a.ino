@@ -1038,32 +1038,32 @@ void loop() {
   //  }
 
 
-  if ( (btn_tim == 0 || btn_tim == touchBTN1pin) and mode == 0) { //모드0번 1버튼 독서대 위로  : 누르는 동안 작동
-    if (analogRead(touchBTN1pin) >= 900) {
+  if ( (btn_tim == 0 || btn_tim == touchBTN2pin) and mode == 0) { //모드0번 2버튼 독서대 위로  : 누르는 동안 작동
+    if (analogRead(touchBTN2pin) >= 900) {
 
       if (desk_flag == false) { // 터치가 되었을 때 엣지체크
 
         desk_flag = true;
         if (tim1_run_flag == 0) { //타이머가 실행되고 있는지 체크
           tim1_run_flag = 1;
-          startTimer(touchBTN1pin);
+          startTimer(touchBTN2pin);
           fCylinderUP(deskCylinder);
 
           u8g.firstPage();
           do {
-            u8g.drawStr(0, 22, "desk up");
+            u8g.drawStr(0, 22, "desk down");
           } while (u8g.nextPage());
         }
       }
 
-      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, 1, ADDR_CURRDESK);
+      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, -1, ADDR_CURRDESK);
     }
     else {
       if (tim1_run_flag == 1) {
         desk_flag = false;
         int_flag = false;
         tim1_run_flag = 0;
-        stopTimer(touchBTN1pin);
+        stopTimer(touchBTN2pin);
         fCylinderSTOP(deskCylinder);
 
         u8g.firstPage();
@@ -1075,30 +1075,30 @@ void loop() {
     }
   }
 
-  if ( (btn_tim == 0 || btn_tim == touchBTN2pin) and mode == 0) { //모드0번 2버튼 독서대 아래로  : 누르는 동안 작동
-    if (analogRead(touchBTN2pin) >= 900) {
+  if ( (btn_tim == 0 || btn_tim == touchBTN1pin) and mode == 0) { //모드0번 1버튼 독서대 아래로  : 누르는 동안 작동
+    if (analogRead(touchBTN1pin) >= 900) {
       if (desk_flag == false) { // 터치가 되었을 때 엣지체크
         desk_flag = true;
         if (tim1_run_flag == 0) { //타이머가 실행되고 있는지 체크
           tim1_run_flag = 1;
-          startTimer(touchBTN2pin);
+          startTimer(touchBTN1pin);
           fCylinderDOWN(deskCylinder);
 
           u8g.firstPage();
           do {
-            u8g.drawStr(0, 22, "desk down");
+            u8g.drawStr(0, 22, "desk up");
           } while (u8g.nextPage());
         }
       }
 
-      fPhoto_test(pre_photo_desk, curr_photo_desk, &photo_cnt_desk, -1, ADDR_CURRDESK);
+      fPhoto_test(pre_photo_desk, curr_photo_desk, &photo_cnt_desk, 1, ADDR_CURRDESK);
     }
     else {
       if (tim1_run_flag == 1) {
         desk_flag = false;
         int_flag = false;
         tim1_run_flag = 0;
-        stopTimer(touchBTN2pin);
+        stopTimer(touchBTN1pin);
         fCylinderSTOP(deskCylinder);
 
         u8g.firstPage();
