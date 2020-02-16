@@ -514,7 +514,7 @@ int getFingerprintIDez() {
   int moni_height = 0;
   int moni_angle = 0;
   int book_height = 0;
-
+  int_flag = false;
   if (p != FINGERPRINT_OK)  return -1;
 
   p = finger.image2Tz();
@@ -568,20 +568,35 @@ int getFingerprintIDez() {
   //독서대 실린더를 확인해서 증감시키는 부분
   if (photo_cnt_desk < book_height) {
 
-    //독서대 실린더 늘임
-    fCylinderUP(deskCylinder);
-    auto_flag = true;
-  }
-  else if (photo_cnt_desk > book_height) {
-
     //독서대 실린더 줄임
     fCylinderDOWN(deskCylinder);
     auto_flag = true;
   }
+  else if (photo_cnt_desk > book_height) {
+    //독서대 실린더 늘임
+    fCylinderUP(deskCylinder);
+    auto_flag = true;
+  }
+  delay(50);
+  //현재 포토센서 값과 지문인식으로 불러온 값이 같아질 때 까지 이동
+  while ((photo_cnt_desk != book_height) and auto_stop == false) {
+    int curr_photo_desk = digitalRead(PHOTOSENSOR1);
+
+    if (photo_cnt_desk != book_height) {
+      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, (photo_cnt_desk < book_height ? 1 : -1), ADDR_CURRDESK);
+    }
+
+    pre_photo_desk = curr_photo_desk;
+  }
+  //독서대 멈춤
+  fCylinderSTOP(deskCylinder);
+  //독서대 멈춤
+
+  delay(50);
+  auto_flag = false;
 
   //모니터 높이 실린더를 확인해서 증감시키는 부분
   if (photo_cnt_move < moni_height) {
-
     //모니터 높이 실린더 늘임
     fCylinderUP(moniterMoveCylinder);
     auto_flag = true;
@@ -592,48 +607,39 @@ int getFingerprintIDez() {
     fCylinderDOWN(moniterMoveCylinder);
     auto_flag = true;
   }
-
+  delay(50);
   //현재 포토센서 값과 지문인식으로 불러온 값이 같아질 때 까지 이동
-  while (((photo_cnt_desk != book_height) or (photo_cnt_move != moni_height)) and auto_stop == false) {
-    int curr_photo_desk = digitalRead(PHOTOSENSOR1);
+  while ((photo_cnt_move != moni_height) and auto_stop == false) {
     int curr_photo_move = digitalRead(PHOTOSENSOR3);
 
-    if (photo_cnt_desk != book_height) {
-      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, (photo_cnt_desk < book_height ? 1 : -1), ADDR_CURRDESK);
-    }
     if (photo_cnt_move != moni_height) {
       fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, (photo_cnt_move < moni_height ? 1 : -1), ADDR_CURRHEI);
     }
 
-    pre_photo_desk = curr_photo_desk;
     pre_photo_move = curr_photo_move;
   }
-
-  //독서대 멈춤
-  fCylinderSTOP(deskCylinder);
-  //독서대 멈춤
-
   //모니터 높이 멈춤
   fCylinderSTOP(moniterMoveCylinder);
   //모니터 높이 멈춤
 
+  delay(50);
   auto_flag = false;
 
   //모니터 높이조절이 멈춘 후에 모니터 각도를 확인하여 움직임
   //모니터 각도 실린더를 확인해서 증감시키는 부분
   if (photo_cnt_angle < moni_angle) {
 
-    //모니터 각도 실린더 늘임
-    fCylinderUP(moniterAngleCylinder);
-    auto_flag = true;
-  }
-  else if (photo_cnt_angle > moni_angle) {
-
     //모니터 각도 실린더 줄임
     fCylinderDOWN(moniterAngleCylinder);
     auto_flag = true;
   }
+  else if (photo_cnt_angle > moni_angle) {
 
+    //모니터 각도 실린더 늘임
+    fCylinderUP(moniterAngleCylinder);
+    auto_flag = true;
+  }
+  delay(50);
   while ((photo_cnt_angle != moni_angle) and auto_stop == false) {
     int curr_photo_angle = digitalRead(PHOTOSENSOR2);
 
@@ -643,14 +649,14 @@ int getFingerprintIDez() {
 
     pre_photo_angle = curr_photo_angle;
   }
-
+  delay(50);
   //모니터 각도 멈춤
   fCylinderSTOP(moniterAngleCylinder);
   //모니터 각도 멈춤
 
   auto_flag = false;
   auto_stop = false;
-
+  int_flag = true;
   return finger.fingerID;
 }
 
@@ -698,15 +704,31 @@ void modeSet() {
 }
 
 void fCylinderReset(void) {
-
   //독서대 실린더를 확인해서 증감시키는 부분
   if (photo_cnt_desk > 0) {
-    fCylinderDOWN(deskCylinder);
+    fCylinderUP(deskCylinder);
     auto_flag = true;
   } else if (photo_cnt_desk < 0) {
     photo_cnt_desk = 0 ;
     fCylinderSTOP(deskCylinder);
   }
+
+  //현재 포토센서 값과 지문인식으로 불러온 값이 같아질 때 까지 이동
+  while ((photo_cnt_desk != 0) and auto_stop == false) {
+    int curr_photo_desk = digitalRead(PHOTOSENSOR1);
+
+    if (photo_cnt_desk != 0) {
+      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, -1, ADDR_CURRDESK);
+    }
+    pre_photo_desk = curr_photo_desk;
+
+  }
+  //독서대 멈춤
+  fCylinderSTOP(deskCylinder);
+  //독서대 멈춤
+
+  auto_flag = false;
+  delay(50);
 
   //모니터 높이 실린더를 확인해서 증감시키는 부분
   if (photo_cnt_move > 0) {
@@ -717,37 +739,28 @@ void fCylinderReset(void) {
     fCylinderSTOP(moniterMoveCylinder);
   }
 
-  //현재 포토센서 값과 지문인식으로 불러온 값이 같아질 때 까지 이동
-  while (((photo_cnt_desk != 0) or (photo_cnt_move != 0)) and auto_stop == false) {
-    int curr_photo_desk = digitalRead(PHOTOSENSOR1);
+  while ((photo_cnt_move != 0) and auto_stop == false) {
     int curr_photo_move = digitalRead(PHOTOSENSOR3);
 
-    if (photo_cnt_desk != 0) {
-      fPhoto_test(pre_photo_desk , curr_photo_desk, &photo_cnt_desk, -1, ADDR_CURRDESK);
-    }
     if (photo_cnt_move != 0) {
       fPhoto_test(pre_photo_move , curr_photo_move, &photo_cnt_move, -1, ADDR_CURRHEI);
     }
-    pre_photo_desk = curr_photo_desk;
     pre_photo_move = curr_photo_move;
   }
-
-  //독서대 멈춤
-  fCylinderSTOP(deskCylinder);
-  //독서대 멈춤
 
   //모니터 높이 멈춤
   fCylinderSTOP(moniterMoveCylinder);
   //모니터 높이 멈춤
-
+  
   auto_flag = false;
+  delay(50);
 
   //모니터 높이조절이 멈춘 후에 모니터 각도를 확인하여 움직임
   //모니터 각도 실린더를 확인해서 증감시키는 부분
   if (photo_cnt_angle > 0) {
-
-    //모니터 각도 실린더 늘임
-    fCylinderDOWN(moniterAngleCylinder);
+    Serial.println("here");
+    //모니터 각도 실린더 줄임
+    fCylinderUP(moniterAngleCylinder);
     auto_flag = true;
   }
   else if (photo_cnt_angle < 0) {
@@ -1075,7 +1088,7 @@ void loop() {
     }
   }
 
-  if ( (btn_tim == 0 || btn_tim == touchBTN1pin) and mode == 0) { //모드0번 1버튼 독서대 아래로  : 누르는 동안 작동
+  if ( (btn_tim == 0 || btn_tim == touchBTN1pin) and mode == 0) { //모드0번 1버튼 독서대 위로  : 누르는 동안 작동
     if (analogRead(touchBTN1pin) >= 900) {
       if (desk_flag == false) { // 터치가 되었을 때 엣지체크
         desk_flag = true;
@@ -1205,7 +1218,7 @@ void loop() {
     else {
       if (tim1_run_flag == 1) {
         angle_flag = false;
-        int_flag = false;        
+        int_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN2pin);
         fCylinderSTOP(moniterMoveCylinder);
@@ -1235,7 +1248,7 @@ void loop() {
           } while (u8g.nextPage());
         }
       }
-      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, 1, ADDR_CURRANGLE);
+      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, -1, ADDR_CURRANGLE);
     }
     else {
       if (tim1_run_flag == 1) {
@@ -1271,7 +1284,7 @@ void loop() {
           } while (u8g.nextPage());
         }
       }
-      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, -1, ADDR_CURRANGLE);
+      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, 1, ADDR_CURRANGLE);
     }
     else {
       if (tim1_run_flag == 1) {
@@ -1427,6 +1440,7 @@ void loop() {
 
   if ( (btn_tim == 0 || btn_tim == touchBTN3pin) and mode == 2) { //모드2번 3버튼 : 현재 실린더 위치를 초기화
     if (analogRead(touchBTN3pin) >= 900) {
+      int_flag = false;
       //현재 포토 센서가 0이 될때 까지
       char str_height[10];
       char str_desk[10];
@@ -1470,8 +1484,9 @@ void loop() {
       do {
         u8g.drawStr(0, 22, "move complete!");
       } while (u8g.nextPage());
-
+      int_flag = true;
     } else {
+
     }
   }
 
