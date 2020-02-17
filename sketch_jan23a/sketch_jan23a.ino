@@ -12,16 +12,16 @@ U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE | U8G_I2C_OPT_DEV_0); // I2C / TWI
 #define touchBTN2pin A2
 #define touchBTN3pin A3
 #define touchBTN4pin A4
+#define ISR_IN A0
 
+#define angleCylinderR 5
+#define angleCylinderL 4
 
-#define angleCylinderR 4
-#define angleCylinderL 5
+#define moveCylinderR 7
+#define moveCylinderL 6
 
-#define moveCylinderR 6
-#define moveCylinderL 7
-
-#define deskCylinderR 8 //독서대 원래는 6
-#define deskCylinderL 9 //독서대 원래는 7
+#define deskCylinderR 9 //독서대 원래는 6
+#define deskCylinderL 8 //독서대 원래는 7
 
 #define TX 12
 #define RX 13
@@ -514,7 +514,7 @@ int getFingerprintIDez() {
   int moni_height = 0;
   int moni_angle = 0;
   int book_height = 0;
-  int_flag = false;
+//  int_flag = false;
   if (p != FINGERPRINT_OK)  return -1;
 
   p = finger.image2Tz();
@@ -656,7 +656,7 @@ int getFingerprintIDez() {
 
   auto_flag = false;
   auto_stop = false;
-  int_flag = true;
+//  int_flag = true;
   return finger.fingerID;
 }
 
@@ -669,6 +669,10 @@ int getFingerprintIDez() {
 */
 
 void modeSet() {
+  Serial.println(digitalRead(touchBTN0pin));
+  if(digitalRead(touchBTN0pin) == 0){
+    return;
+  }
   if (int_flag == false) {
     return;
   }
@@ -676,11 +680,11 @@ void modeSet() {
     auto_flag = false;
     auto_stop = true;
     fCylinderSTOP(deskCylinder);
-    delay(50);
+    
     fCylinderSTOP(moniterMoveCylinder);
-    delay(50);
+    
     fCylinderSTOP(moniterAngleCylinder);
-    delay(50);
+    
     stopTimer(btn_tim);
 
     u8g.firstPage();
@@ -795,9 +799,12 @@ void setup() {
   pinMode(moveCylinderL, OUTPUT);
   pinMode(angleCylinderR, OUTPUT);
   pinMode(angleCylinderL, OUTPUT);
+  
 
   pinMode(touchBTN0pin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(touchBTN0pin), modeSet, FALLING);
+  attachInterrupt(digitalPinToInterrupt(touchBTN0pin), modeSet, RISING);
+
+  
 
   photo_cnt_desk = EEPROM.read(ADDR_CURRDESK);
   photo_cnt_move = EEPROM.read(ADDR_CURRHEI);
@@ -868,7 +875,7 @@ void print_photo_oled() {
 
 //포토다이오드 센서 값에 따라 포토다이오드 카운트를 증감시키는 함수
 //이전 포토다이오드값, 현재 포토다이오드값, 증감시킬 카운트 변수의 포인터, 증감값
-void fPhoto_test(int pre_photo, int curr_photo, int *cnt, int x, int cylinder) {
+int fPhoto_test(int pre_photo, int curr_photo, int *cnt, int x, int cylinder) {
   if (curr_photo == 0 and pre_photo == 1) {
     if ( x == 1) {
       (*cnt)++;
@@ -886,9 +893,8 @@ void fPhoto_test(int pre_photo, int curr_photo, int *cnt, int x, int cylinder) {
 
     print_photo_oled();
 
-    Serial.print(*cnt);
-    Serial.print("  ");
   }
+  return (*cnt);
 }
 
 //지문 삭제 함수 시작
@@ -1074,7 +1080,7 @@ void loop() {
     else {
       if (tim1_run_flag == 1) {
         desk_flag = false;
-        int_flag = false;
+//        int_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN2pin);
         fCylinderSTOP(deskCylinder);
@@ -1083,7 +1089,7 @@ void loop() {
         do {
           u8g.drawStr(0, 22, "desk stop");
         } while (u8g.nextPage());
-        int_flag = true;
+//        int_flag = true;
       }
     }
   }
@@ -1109,7 +1115,7 @@ void loop() {
     else {
       if (tim1_run_flag == 1) {
         desk_flag = false;
-        int_flag = false;
+//        int_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN1pin);
         fCylinderSTOP(deskCylinder);
@@ -1118,7 +1124,7 @@ void loop() {
         do {
           u8g.drawStr(0, 22, "desk stop");
         } while (u8g.nextPage());
-        int_flag = true;
+//        int_flag = true;
       }
     }
   }
@@ -1182,7 +1188,7 @@ void loop() {
     }
     else {
       if (tim1_run_flag == 1) {
-        int_flag = false;
+//        int_flag = false;
         angle_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN1pin);
@@ -1192,7 +1198,7 @@ void loop() {
         do {
           u8g.drawStr(0, 22, "monitor stop");
         } while (u8g.nextPage());
-        int_flag = true;
+//        int_flag = true;
       }
     }
   }
@@ -1218,7 +1224,7 @@ void loop() {
     else {
       if (tim1_run_flag == 1) {
         angle_flag = false;
-        int_flag = false;
+//        int_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN2pin);
         fCylinderSTOP(moniterMoveCylinder);
@@ -1227,7 +1233,7 @@ void loop() {
         do {
           u8g.drawStr(0, 22, "monitor stop");
         } while (u8g.nextPage());
-        int_flag = true;
+//        int_flag = true;
       }
     }
   }
@@ -1253,7 +1259,7 @@ void loop() {
     else {
       if (tim1_run_flag == 1) {
         move_flag = false;
-        int_flag = false;
+//        int_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN3pin);
         fCylinderSTOP(moniterAngleCylinder);
@@ -1262,7 +1268,7 @@ void loop() {
         do {
           u8g.drawStr(0, 22, "angle stop");
         } while (u8g.nextPage());
-        int_flag = true;
+//        int_flag = true;
       }
     }
   }
@@ -1289,7 +1295,7 @@ void loop() {
     else {
       if (tim1_run_flag == 1) {
         move_flag = false;
-        int_flag = false;
+//        int_flag = false;
         tim1_run_flag = 0;
         stopTimer(touchBTN4pin);
         fCylinderSTOP(moniterAngleCylinder);
@@ -1298,7 +1304,7 @@ void loop() {
         do {
           u8g.drawStr(0, 22, "angle stop");
         } while (u8g.nextPage());
-        int_flag = true;
+//        int_flag = true;
       }
     }
   }
@@ -1440,7 +1446,7 @@ void loop() {
 
   if ( (btn_tim == 0 || btn_tim == touchBTN3pin) and mode == 2) { //모드2번 3버튼 : 현재 실린더 위치를 초기화
     if (analogRead(touchBTN3pin) >= 900) {
-      int_flag = false;
+//      int_flag = false;
       //현재 포토 센서가 0이 될때 까지
       char str_height[10];
       char str_desk[10];
@@ -1484,7 +1490,7 @@ void loop() {
       do {
         u8g.drawStr(0, 22, "move complete!");
       } while (u8g.nextPage());
-      int_flag = true;
+//      int_flag = true;
     } else {
 
     }
