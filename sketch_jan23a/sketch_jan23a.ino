@@ -20,8 +20,8 @@ U8GLIB_SSD1306_128X64 u8g(U8G_I2C_OPT_NONE | U8G_I2C_OPT_DEV_0); // I2C / TWI
 #define moveCylinderR 7
 #define moveCylinderL 6
 
-#define deskCylinderR 9 //독서대 원래는 6
-#define deskCylinderL 8 //독서대 원래는 7
+#define deskCylinderR 8 //독서대 원래는 6
+#define deskCylinderL 9 //독서대 원래는 7
 
 #define TX 12
 #define RX 13
@@ -589,9 +589,6 @@ int getFingerprintIDez() {
     pre_photo_desk = curr_photo_desk;
   }
 
-  while (digitalRead(digitalRead(PHOTOSENSOR1)) == 1) {
-  }
-
   //독서대 멈춤
   fCylinderSTOP(deskCylinder);
   //독서대 멈춤
@@ -621,9 +618,6 @@ int getFingerprintIDez() {
     }
 
     pre_photo_move = curr_photo_move;
-  }
-
-  while (digitalRead(digitalRead(PHOTOSENSOR3)) == 1) {
   }
 
   //모니터 높이 멈춤
@@ -658,8 +652,7 @@ int getFingerprintIDez() {
     pre_photo_angle = curr_photo_angle;
   }
   delay(50);
-  while (digitalRead(digitalRead(PHOTOSENSOR2)) == 1) {
-  }
+  
   //모니터 각도 멈춤
   fCylinderSTOP(moniterAngleCylinder);
   //모니터 각도 멈춤
@@ -687,20 +680,11 @@ void modeSet() {
   }
   if (auto_flag == true) {
     auto_flag = false;
-    auto_stop = true;
-
-    while (digitalRead(digitalRead(PHOTOSENSOR1)) == 1) {
-    }
+    auto_stop = true;  
 
     fCylinderSTOP(deskCylinder);
 
-    while (digitalRead(digitalRead(PHOTOSENSOR3)) == 1) {
-    }
-
     fCylinderSTOP(moniterMoveCylinder);
-
-    while (digitalRead(digitalRead(PHOTOSENSOR2)) == 1) {
-    }
 
     fCylinderSTOP(moniterAngleCylinder);
 
@@ -747,9 +731,6 @@ void fCylinderReset(void) {
 
   }
 
-  while (digitalRead(digitalRead(PHOTOSENSOR1)) == 1) {
-  }
-
   //독서대 멈춤
   fCylinderSTOP(deskCylinder);
   //독서대 멈춤
@@ -764,9 +745,6 @@ void fCylinderReset(void) {
   } else if (photo_cnt_move < 0) {
     photo_cnt_move = 0 ;
     fCylinderSTOP(moniterMoveCylinder);
-  }
-
-  while (digitalRead(digitalRead(PHOTOSENSOR3)) == 1) {
   }
 
   while ((photo_cnt_move != 0) and auto_stop == false) {
@@ -1108,9 +1086,6 @@ void loop() {
         //        int_flag = false;
         tim1_run_flag = 0;
 
-        while (digitalRead(digitalRead(PHOTOSENSOR1)) == 1) {
-        }
-
         stopTimer(touchBTN2pin);
         fCylinderSTOP(deskCylinder);
 
@@ -1146,9 +1121,6 @@ void loop() {
         desk_flag = false;
         //        int_flag = false;
         tim1_run_flag = 0;
-
-        while (digitalRead(digitalRead(PHOTOSENSOR1)) == 1) {
-        }
 
         stopTimer(touchBTN1pin);
         fCylinderSTOP(deskCylinder);
@@ -1225,9 +1197,6 @@ void loop() {
         angle_flag = false;
         tim1_run_flag = 0;
 
-        while (digitalRead(digitalRead(PHOTOSENSOR3)) == 1) {
-        }
-
         stopTimer(touchBTN1pin);
         fCylinderSTOP(moniterMoveCylinder);
 
@@ -1264,9 +1233,6 @@ void loop() {
         //        int_flag = false;
         tim1_run_flag = 0;
 
-        while (digitalRead(digitalRead(PHOTOSENSOR3)) == 1) {
-        }
-
         stopTimer(touchBTN2pin);
         fCylinderSTOP(moniterMoveCylinder);
 
@@ -1279,55 +1245,15 @@ void loop() {
     }
   }
 
-  if ( (btn_tim == 0 || btn_tim == touchBTN3pin) and mode == 1) { //모드1번 3버튼 모니터 각도 위로  : 누르는 동안 작동
-    if (analogRead(touchBTN3pin) >= 900) {
+  if ( (btn_tim == 0 || btn_tim == touchBTN4pin) and mode == 1) { //모드1번 3버튼 모니터 각도 아래로  : 누르는 동안 작동
+    if (analogRead(touchBTN4pin) >= 900) {
       if (move_flag == false) { // 터치가 되었을 때 엣지체크
         move_flag = true;
         //타이머가 실행되고 있는지 체크
         if (tim1_run_flag == 0) {
           tim1_run_flag = 1;
-          startTimer(touchBTN3pin);
-          fCylinderUP(moniterAngleCylinder);
-
-          u8g.firstPage();
-          do {
-            u8g.drawStr(0, 22, "angle up");
-          } while (u8g.nextPage());
-        }
-      }
-      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, -1, ADDR_CURRANGLE);
-    }
-    else {
-      if (tim1_run_flag == 1) {
-        move_flag = false;
-        //        int_flag = false;
-        tim1_run_flag = 0;
-
-        while (digitalRead(digitalRead(PHOTOSENSOR2)) == 1) {
-        }
-
-        stopTimer(touchBTN3pin);
-        fCylinderSTOP(moniterAngleCylinder);
-
-        u8g.firstPage();
-        do {
-          u8g.drawStr(0, 22, "angle stop");
-        } while (u8g.nextPage());
-        //        int_flag = true;
-      }
-    }
-  }
-
-  if (( btn_tim == 0 || btn_tim == touchBTN4pin) and mode == 1) { //모드1번 4버튼 모니터 각도 아래로  : 누르는 동안 작동
-    if (analogRead(touchBTN4pin) >= 900) {
-      // 터치가 되었을 때 엣지체크
-      if (move_flag == false) {
-        move_flag = true;
-        //타이머가 실행되고 있는지 체크
-        if (tim1_run_flag == 0) {
-          tim1_run_flag = 1;
           startTimer(touchBTN4pin);
-          fCylinderDOWN(moniterAngleCylinder);
+          fCylinderUP(moniterAngleCylinder);
 
           u8g.firstPage();
           do {
@@ -1343,10 +1269,44 @@ void loop() {
         //        int_flag = false;
         tim1_run_flag = 0;
 
-        while (digitalRead(digitalRead(PHOTOSENSOR2)) == 1) {
-        }
-
         stopTimer(touchBTN4pin);
+        fCylinderSTOP(moniterAngleCylinder);
+
+        u8g.firstPage();
+        do {
+          u8g.drawStr(0, 22, "angle stop");
+        } while (u8g.nextPage());
+        //        int_flag = true;
+      }
+    }
+  }
+
+  if (( btn_tim == 0 || btn_tim == touchBTN3pin) and mode == 1) { //모드1번 4버튼 모니터 각도 위로  : 누르는 동안 작동
+    if (analogRead(touchBTN3pin) >= 900) {
+      // 터치가 되었을 때 엣지체크
+      if (move_flag == false) {
+        move_flag = true;
+        //타이머가 실행되고 있는지 체크
+        if (tim1_run_flag == 0) {
+          tim1_run_flag = 1;
+          startTimer(touchBTN3pin);
+          fCylinderDOWN(moniterAngleCylinder);
+
+          u8g.firstPage();
+          do {
+            u8g.drawStr(0, 22, "angle up");
+          } while (u8g.nextPage());
+        }
+      }
+      fPhoto_test(pre_photo_angle , curr_photo_angle, &photo_cnt_angle, -1, ADDR_CURRANGLE);
+    }
+    else {
+      if (tim1_run_flag == 1) {
+        move_flag = false;
+        //        int_flag = false;
+        tim1_run_flag = 0;
+
+        stopTimer(touchBTN3pin);
         fCylinderSTOP(moniterAngleCylinder);
 
         u8g.firstPage();
