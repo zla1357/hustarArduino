@@ -588,6 +588,10 @@ int getFingerprintIDez() {
 
     pre_photo_desk = curr_photo_desk;
   }
+
+  while (digitalRead(digitalRead(PHOTOSENSOR1)) == 1) {
+  }
+
   //독서대 멈춤
   fCylinderSTOP(deskCylinder);
   //독서대 멈춤
@@ -618,6 +622,10 @@ int getFingerprintIDez() {
 
     pre_photo_move = curr_photo_move;
   }
+
+  while (digitalRead(digitalRead(PHOTOSENSOR3)) == 1) {
+  }
+
   //모니터 높이 멈춤
   fCylinderSTOP(moniterMoveCylinder);
   //모니터 높이 멈춤
@@ -650,6 +658,8 @@ int getFingerprintIDez() {
     pre_photo_angle = curr_photo_angle;
   }
   delay(50);
+  while (digitalRead(digitalRead(PHOTOSENSOR2)) == 1) {
+  }
   //모니터 각도 멈춤
   fCylinderSTOP(moniterAngleCylinder);
   //모니터 각도 멈춤
@@ -678,9 +688,19 @@ void modeSet() {
   if (auto_flag == true) {
     auto_flag = false;
     auto_stop = true;
+
+    while (digitalRead(digitalRead(PHOTOSENSOR1)) == 1) {
+    }
+
     fCylinderSTOP(deskCylinder);
 
+    while (digitalRead(digitalRead(PHOTOSENSOR3)) == 1) {
+    }
+
     fCylinderSTOP(moniterMoveCylinder);
+
+    while (digitalRead(digitalRead(PHOTOSENSOR2)) == 1) {
+    }
 
     fCylinderSTOP(moniterAngleCylinder);
 
@@ -726,6 +746,10 @@ void fCylinderReset(void) {
     pre_photo_desk = curr_photo_desk;
 
   }
+
+  while (digitalRead(digitalRead(PHOTOSENSOR1)) == 1) {
+  }
+
   //독서대 멈춤
   fCylinderSTOP(deskCylinder);
   //독서대 멈춤
@@ -740,6 +764,9 @@ void fCylinderReset(void) {
   } else if (photo_cnt_move < 0) {
     photo_cnt_move = 0 ;
     fCylinderSTOP(moniterMoveCylinder);
+  }
+
+  while (digitalRead(digitalRead(PHOTOSENSOR3)) == 1) {
   }
 
   while ((photo_cnt_move != 0) and auto_stop == false) {
@@ -1055,7 +1082,7 @@ void loop() {
   //  }
 
 
-  if ( (btn_tim == 0 || btn_tim == touchBTN2pin) and mode == 0) { //모드0번 2버튼 독서대 위로  : 누르는 동안 작동
+  if ( (btn_tim == 0 || btn_tim == touchBTN2pin) and mode == 0) { //모드0번 2버튼 독서대 아래로  : 누르는 동안 작동
     if (analogRead(touchBTN2pin) >= 900) {
 
       if (desk_flag == false) { // 터치가 되었을 때 엣지체크
@@ -1080,6 +1107,10 @@ void loop() {
         desk_flag = false;
         //        int_flag = false;
         tim1_run_flag = 0;
+
+        while (digitalRead(digitalRead(PHOTOSENSOR1)) == 1) {
+        }
+
         stopTimer(touchBTN2pin);
         fCylinderSTOP(deskCylinder);
 
@@ -1115,6 +1146,10 @@ void loop() {
         desk_flag = false;
         //        int_flag = false;
         tim1_run_flag = 0;
+
+        while (digitalRead(digitalRead(PHOTOSENSOR1)) == 1) {
+        }
+
         stopTimer(touchBTN1pin);
         fCylinderSTOP(deskCylinder);
 
@@ -1190,6 +1225,9 @@ void loop() {
         angle_flag = false;
         tim1_run_flag = 0;
 
+        while (digitalRead(digitalRead(PHOTOSENSOR3)) == 1) {
+        }
+
         stopTimer(touchBTN1pin);
         fCylinderSTOP(moniterMoveCylinder);
 
@@ -1225,6 +1263,10 @@ void loop() {
         angle_flag = false;
         //        int_flag = false;
         tim1_run_flag = 0;
+
+        while (digitalRead(digitalRead(PHOTOSENSOR3)) == 1) {
+        }
+
         stopTimer(touchBTN2pin);
         fCylinderSTOP(moniterMoveCylinder);
 
@@ -1262,8 +1304,6 @@ void loop() {
         tim1_run_flag = 0;
 
         while (digitalRead(digitalRead(PHOTOSENSOR2)) == 1) {
-          Serial.println("angle photo : ");
-          Serial.println(digitalRead(PHOTOSENSOR2));
         }
 
         stopTimer(touchBTN3pin);
@@ -1304,8 +1344,6 @@ void loop() {
         tim1_run_flag = 0;
 
         while (digitalRead(digitalRead(PHOTOSENSOR2)) == 1) {
-          Serial.println("angle photo : ");
-          Serial.println(digitalRead(PHOTOSENSOR2));
         }
 
         stopTimer(touchBTN4pin);
@@ -1424,12 +1462,19 @@ void loop() {
           stopTimer(touchBTN3pin);
         }
         fingerId = deleteFingerPrint(touchBTN3pin);
-        Serial.print("main fingerID : ");
-        Serial.print(fingerId);
-        delay(50);
-
-        if (fingerId > 50) {
-          stopTimer(touchBTN3pin);
+        if (fingerId == 60) {
+          Serial.print("main fingerID : ");
+          Serial.print(fingerId);
+          u8g.firstPage();
+          char err_code[10] ;
+          sprintf(err_code, "%d", fingerId);
+          do {
+            u8g.drawStr(0, 22, "fingerID : ");
+            u8g.drawStr(0, 44, err_code);
+          } while (u8g.nextPage());
+          break;
+        }
+        else{
           u8g.firstPage();
           char err_code[10] ;
           sprintf(err_code, "%d", fingerId);
@@ -1438,6 +1483,12 @@ void loop() {
             u8g.drawStr(0, 44, err_code);
           } while (u8g.nextPage());
           break;
+        }
+
+        delay(50);
+
+        if (fingerId > 50) {
+          stopTimer(touchBTN3pin);
         }
         if (tim4_cnt > 30) {
           stopTimer(touchBTN3pin);
